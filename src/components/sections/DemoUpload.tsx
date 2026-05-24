@@ -18,11 +18,18 @@ type Phase =
 
 interface Comment {
   id: string
-  x: number
-  y: number
+  absX: number   // absolute pixel X in iframe document (scrollX-adjusted)
+  absY: number   // absolute pixel Y in iframe document (scrollY-adjusted)
   text: string
   resolved: boolean
   createdAt: number
+}
+
+interface PendingPin {
+  viewX: number  // % of overlay width at click time (for displaying the card)
+  viewY: number  // % of overlay height at click time
+  absX: number   // absolute pixel X in iframe document
+  absY: number   // absolute pixel Y in iframe document
 }
 
 // ── Blob registry ─────────────────────────────────────────────────────────────
@@ -382,8 +389,9 @@ export function DemoUpload() {
 
   const [commentMode, setCommentMode] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
-  const [pendingPin, setPendingPin] = useState<{ x: number; y: number } | null>(null)
+  const [pendingPin, setPendingPin] = useState<PendingPin | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [iframeScroll, setIframeScroll] = useState({ x: 0, y: 0 })
 
   const handleFile = useCallback(async (file: File) => {
     const name = file.name.toLowerCase()
@@ -408,13 +416,25 @@ export function DemoUpload() {
     const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''
   }, [handleFile])
 
+  // Track iframe scroll so pins move with the content
+  useEffect(() => {
+    if (phase.kind !== 'preview') return
+    const win = iframeRef.current?.contentWindow
+    if (!win) return
+    const onScroll = () => setIframeScroll({ x: win.scrollX, y: win.scrollY })
+    win.addEventListener('scroll', onScroll, { passive: true })
+    return () => win.removeEventListener('scroll', onScroll)
+  }, [phase.kind])
+
   const reset = useCallback(() => {
     revokeAll()
     setPhase({ kind: 'idle' })
     setComments([]); setPendingPin(null); setActiveId(null); setCommentMode(false)
+    setIframeScroll({ x: 0, y: 0 })
   }, [])
 
   const onIframeLoad = useCallback(() => {
+    setIframeScroll({ x: 0, y: 0 })
     setPhase(s => s.kind === 'rendering' ? { kind: 'preview', filename: s.filename, src: s.src } : s)
   }, [])
 
@@ -422,14 +442,22 @@ export function DemoUpload() {
     if (!commentMode) return
     if ((e.target as HTMLElement) !== e.currentTarget) return
     const r = e.currentTarget.getBoundingClientRect()
-    setPendingPin({ x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 })
+    const viewX = ((e.clientX - r.left) / r.width) * 100
+    const viewY = ((e.clientY - r.top) / r.height) * 100
+    // Convert to absolute document coordinates (px) so pins follow scroll
+    const win = iframeRef.current?.contentWindow
+    const scrollX = win?.scrollX ?? 0
+    const scrollY = win?.scrollY ?? 0
+    const absX = (viewX / 100) * r.width + scrollX
+    const absY = (viewY / 100) * r.height + scrollY
+    setPendingPin({ viewX, viewY, absX, absY })
     setActiveId(null)
   }, [commentMode])
 
   const addComment = useCallback((text: string) => {
     if (!pendingPin) return
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    setComments(cs => [...cs, { id, x: pendingPin.x, y: pendingPin.y, text, resolved: false, createdAt: Date.now() }])
+    setComments(cs => [...cs, { id, absX: pendingPin.absX, absY: pendingPin.absY, text, resolved: false, createdAt: Date.now() }])
     setActiveId(id); setPendingPin(null)
   }, [pendingPin])
 
@@ -559,30 +587,36 @@ export function DemoUpload() {
                       )}
                     </AnimatePresence>
 
-                    {/* Existing pins */}
+                    {/* Existing pins — recalculate viewport position from absolute coords */}
                     <AnimatePresence>
-                      {comments.map((c, i) => (
-                        <CommentPin key={c.id} number={i + 1} x={c.x} y={c.y}
-                          resolved={c.resolved} active={activeId === c.id}
-                          onClick={() => setActiveId(a => a === c.id ? null : c.id)} />
-                      ))}
+                      {comments.map((c, i) => {
+                        const iw = iframeRef.current?.offsetWidth ?? 760
+                        const ih = iframeRef.current?.offsetHeight ?? 580
+                        const vx = (c.absX - iframeScroll.x) / iw * 100
+                        const vy = (c.absY - iframeScroll.y) / ih * 100
+                        const inView = vx > -2 && vx < 102 && vy > 0 && vy < 101
+                        return inView ? (
+                          <CommentPin key={c.id} number={i + 1} x={vx} y={vy}
+                            resolved={c.resolved} active={activeId === c.id}
+                            onClick={() => setActiveId(a => a === c.id ? null : c.id)} />
+                        ) : null
+                      })}
                     </AnimatePresence>
 
-                    {/* Pending pin + input */}
+                    {/* Pending pin + input (uses viewport coords from click time) */}
                     <AnimatePresence>
                       {pendingPin && (
                         <>
-                          {/* Pulsing ring at click point */}
                           <motion.div key="pending-ring" initial={{ scale: 0 }} animate={{ scale: 1 }}
                             className="absolute z-20 w-6 h-6 rounded-full rounded-bl-none"
-                            style={{ left: `${pendingPin.x}%`, top: `${pendingPin.y}%`, transform: 'translateY(-100%)' }}>
+                            style={{ left: `${pendingPin.viewX}%`, top: `${pendingPin.viewY}%`, transform: 'translateY(-100%)' }}>
                             <div className="w-full h-full rounded-full rounded-bl-none border-2 border-blue-royal bg-blue-royal/20 flex items-center justify-center text-[9px] font-bold text-blue-royal">
                               {comments.length + 1}
                             </div>
                             <div className="absolute inset-0 rounded-full rounded-bl-none border-2 border-blue-royal animate-ping opacity-50" />
                           </motion.div>
 
-                          <NewCommentCard key="pending-card" x={pendingPin.x} y={pendingPin.y}
+                          <NewCommentCard key="pending-card" x={pendingPin.viewX} y={pendingPin.viewY}
                             index={comments.length + 1} onSubmit={addComment}
                             onCancel={() => setPendingPin(null)} />
                         </>
