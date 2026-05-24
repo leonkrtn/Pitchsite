@@ -34,7 +34,7 @@ async function resolveZip(file: File): Promise<string> {
     files
       .filter((f) => !zip.files[f].dir)
       .map(async (f) => {
-        const data = await zip.files[f].async('uint8array')
+        const data = await zip.files[f].async('arraybuffer')
         const mime = guessMime(f)
         const blob = new Blob([data], { type: mime })
         const relativePath = baseDir ? f.replace(baseDir, '') : f
