@@ -135,25 +135,27 @@ function BrowserSkeleton() {
 
 // ── Comment Pin ───────────────────────────────────────────────────────────────
 
-function CommentPin({ number, x, y, resolved, active, onClick }: {
-  number: number; x: number; y: number; resolved: boolean; active: boolean; onClick: () => void
+function CommentPin({ number, resolved, active, onClick, divRef }: {
+  number: number; resolved: boolean; active: boolean; onClick: () => void
+  divRef: (el: HTMLDivElement | null) => void
 }) {
   return (
-    <motion.button
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0, opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-      onClick={e => { e.stopPropagation(); onClick() }}
-      title={`Kommentar ${number}`}
-      className={[
-        'absolute z-20 w-6 h-6 flex items-center justify-center text-[10px] font-bold shadow-lg rounded-full rounded-bl-none transition-all duration-150',
-        resolved ? 'bg-gray-300 text-gray-500' : active ? 'bg-blue-700 text-white ring-2 ring-white ring-offset-1 ring-offset-blue-700/20 scale-110' : 'bg-blue-royal text-white hover:scale-110 hover:bg-blue-700',
-      ].join(' ')}
-      style={{ left: `${x}%`, top: `${y}%`, transform: 'translateY(-100%)' }}
-    >
-      {number}
-    </motion.button>
+    <div ref={divRef} className="absolute z-20" style={{ transform: 'translateY(-100%)' }}>
+      <motion.button
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+        onClick={e => { e.stopPropagation(); onClick() }}
+        title={`Kommentar ${number}`}
+        className={[
+          'w-6 h-6 flex items-center justify-center text-[10px] font-bold shadow-lg rounded-full rounded-bl-none transition-all duration-150',
+          resolved ? 'bg-gray-300 text-gray-500' : active ? 'bg-blue-700 text-white ring-2 ring-white ring-offset-1 ring-offset-blue-700/20 scale-110' : 'bg-blue-royal text-white hover:scale-110 hover:bg-blue-700',
+        ].join(' ')}
+      >
+        {number}
+      </motion.button>
+    </div>
   )
 }
 
@@ -391,7 +393,9 @@ export function DemoUpload() {
   const [comments, setComments] = useState<Comment[]>([])
   const [pendingPin, setPendingPin] = useState<PendingPin | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [iframeScroll, setIframeScroll] = useState({ x: 0, y: 0 })
+  const iframeScrollRef = useRef({ x: 0, y: 0 })
+  const commentsRef = useRef<Comment[]>([])
+  const pinRefs = useRef(new Map<string, HTMLDivElement>())
 
   const handleFile = useCallback(async (file: File) => {
     const name = file.name.toLowerCase()
@@ -416,27 +420,57 @@ export function DemoUpload() {
     const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''
   }, [handleFile])
 
-  // Track iframe scroll so pins move with the content
+  const positionPins = useCallback(() => {
+    const iw = iframeRef.current?.offsetWidth ?? 760
+    const ih = iframeRef.current?.offsetHeight ?? 580
+    const { x: scrollX, y: scrollY } = iframeScrollRef.current
+    for (const c of commentsRef.current) {
+      const el = pinRefs.current.get(c.id)
+      if (!el) continue
+      const vx = (c.absX - scrollX) / iw * 100
+      const vy = (c.absY - scrollY) / ih * 100
+      el.style.left = `${vx}%`
+      el.style.top = `${vy}%`
+      el.style.visibility = vx > -2 && vx < 102 && vy > 0 && vy < 101 ? 'visible' : 'hidden'
+    }
+  }, [])
+
+  // Keep commentsRef in sync and reposition after React commits new pins
+  useEffect(() => {
+    commentsRef.current = comments
+    positionPins()
+  }, [comments, positionPins])
+
+  // Track iframe scroll with RAF — direct DOM writes, zero React re-renders
   useEffect(() => {
     if (phase.kind !== 'preview') return
     const win = iframeRef.current?.contentWindow
     if (!win) return
-    const onScroll = () => setIframeScroll({ x: win.scrollX, y: win.scrollY })
+    let rafId: number | null = null
+    const onScroll = () => {
+      iframeScrollRef.current = { x: win.scrollX, y: win.scrollY }
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => { positionPins(); rafId = null })
+    }
     win.addEventListener('scroll', onScroll, { passive: true })
-    return () => win.removeEventListener('scroll', onScroll)
-  }, [phase.kind])
+    return () => {
+      win.removeEventListener('scroll', onScroll)
+      if (rafId !== null) cancelAnimationFrame(rafId)
+    }
+  }, [phase.kind, positionPins])
 
   const reset = useCallback(() => {
     revokeAll()
     setPhase({ kind: 'idle' })
     setComments([]); setPendingPin(null); setActiveId(null); setCommentMode(false)
-    setIframeScroll({ x: 0, y: 0 })
+    iframeScrollRef.current = { x: 0, y: 0 }
   }, [])
 
   const onIframeLoad = useCallback(() => {
-    setIframeScroll({ x: 0, y: 0 })
+    iframeScrollRef.current = { x: 0, y: 0 }
+    positionPins()
     setPhase(s => s.kind === 'rendering' ? { kind: 'preview', filename: s.filename, src: s.src } : s)
-  }, [])
+  }, [positionPins])
 
   const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
@@ -587,20 +621,29 @@ export function DemoUpload() {
                       )}
                     </AnimatePresence>
 
-                    {/* Existing pins — recalculate viewport position from absolute coords */}
+                    {/* Existing pins — positioned via direct DOM writes for zero-lag scroll tracking */}
                     <AnimatePresence>
-                      {comments.map((c, i) => {
-                        const iw = iframeRef.current?.offsetWidth ?? 760
-                        const ih = iframeRef.current?.offsetHeight ?? 580
-                        const vx = (c.absX - iframeScroll.x) / iw * 100
-                        const vy = (c.absY - iframeScroll.y) / ih * 100
-                        const inView = vx > -2 && vx < 102 && vy > 0 && vy < 101
-                        return inView ? (
-                          <CommentPin key={c.id} number={i + 1} x={vx} y={vy}
-                            resolved={c.resolved} active={activeId === c.id}
-                            onClick={() => setActiveId(a => a === c.id ? null : c.id)} />
-                        ) : null
-                      })}
+                      {comments.map((c, i) => (
+                        <CommentPin key={c.id} number={i + 1}
+                          resolved={c.resolved} active={activeId === c.id}
+                          onClick={() => setActiveId(a => a === c.id ? null : c.id)}
+                          divRef={(el) => {
+                            if (el) {
+                              pinRefs.current.set(c.id, el)
+                              const iw = iframeRef.current?.offsetWidth ?? 760
+                              const ih = iframeRef.current?.offsetHeight ?? 580
+                              const { x: scrollX, y: scrollY } = iframeScrollRef.current
+                              const vx = (c.absX - scrollX) / iw * 100
+                              const vy = (c.absY - scrollY) / ih * 100
+                              el.style.left = `${vx}%`
+                              el.style.top = `${vy}%`
+                              el.style.visibility = vx > -2 && vx < 102 && vy > 0 && vy < 101 ? 'visible' : 'hidden'
+                            } else {
+                              pinRefs.current.delete(c.id)
+                            }
+                          }}
+                        />
+                      ))}
                     </AnimatePresence>
 
                     {/* Pending pin + input (uses viewport coords from click time) */}

@@ -18,6 +18,13 @@ const icons = [
     <rect x="18" y="22" width="12" height="10" rx="2" stroke="#1D4ED8" strokeWidth="1.5" />
     <path d="M20 22v-3a4 4 0 0 1 8 0v3" stroke="#1D4ED8" strokeWidth="1.5" strokeLinecap="round" />
   </svg>,
+  <svg key="d" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 shrink-0" aria-hidden="true">
+    <rect x="8" y="12" width="32" height="28" rx="3" stroke="#1D4ED8" strokeWidth="1.5" />
+    <path d="M8 20h32" stroke="#1D4ED8" strokeWidth="1.5" />
+    <path d="M17 8v8M31 8v8" stroke="#1D4ED8" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M21 31a5 5 0 1 0 5-5" stroke="#1D4ED8" strokeWidth="1.5" strokeLinecap="round" />
+    <path d="M26 26v-3l-3 1.5" stroke="#1D4ED8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>,
 ]
 
 export function Solution() {
