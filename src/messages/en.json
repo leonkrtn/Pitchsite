@@ -4,7 +4,7 @@
   },
   "hero": {
     "headline": "Show your work.\nGet paid.\nWithout risk.",
-    "subline": "Pitchsite is a platform for web designers: pitch your design, sign the contract, handle payment securely — all in one place.",
+    "subline": "You upload your website design, your client opens it via a link, comments directly on it, signs the contract and pays — the money is held securely by Pitchsite until you deliver.",
     "cta": "Join the waitlist",
     "launch": "Launching in"
   },
@@ -22,40 +22,45 @@
   },
   "solution": {
     "label": "The solution",
-    "headline": "Everything you need before a single euro changes hands.",
+    "headline": "Everything you need before you hand over a single file.",
     "items": [
       {
-        "title": "Feedback before purchase",
-        "body": "Your client sees the design and comments directly on it — clicking anywhere on the page. No email ping-pong, no long phone calls."
+        "title": "Your client sees the design — and comments directly on it",
+        "body": "You upload your HTML file or ZIP package. Pitchsite generates an access code. Your client enters this code on pitchsite.de and sees your design in the browser — no app, no account. They can click anywhere and leave a comment. You see the feedback in real time in your dashboard."
       },
       {
-        "title": "Contract, automatic",
-        "body": "Scope of work, price, and delivery date are transferred directly into a legally binding purchase contract. Both parties sign digitally."
+        "title": "Contract and payment in one step",
+        "body": "When the client wants to buy, they click \"Accept project\". They see the full scope of work, the delivery date, and the price — everything you entered when creating the pitch. They create an account, sign the legally binding purchase contract digitally, and pay by credit card or direct debit."
       },
       {
-        "title": "Payment secured",
-        "body": "The client's money sits with Pitchsite until you deliver and they approve. Nobody can just disappear."
+        "title": "The money sits with Pitchsite until you deliver",
+        "body": "After payment, the money sits in the Pitchsite account — not with the client, not in your account. You work on the finished website. When you're done, you upload it and the client approves. Only then does Pitchsite automatically transfer your amount. Nobody can disappear."
       }
     ]
   },
   "howitworks": {
     "label": "How it works",
-    "headline": "Three steps. No chaos.",
+    "headline": "Four steps. From design to payment.",
     "steps": [
       {
         "number": "01",
         "title": "Upload your design",
-        "body": "Upload your HTML file or ZIP package. Pitchsite generates an access code that you send to your client."
+        "body": "Upload your HTML file or ZIP package to Pitchsite. Enter the price, scope of work, and delivery date. Pitchsite generates a 10-digit access code — send it to your client via WhatsApp, email, or SMS."
       },
       {
         "number": "02",
-        "title": "Client comments & signs",
-        "body": "Your client opens the design with the code, leaves feedback directly in the browser, and signs the contract with one click."
+        "title": "Client opens the design & gives feedback",
+        "body": "Your client enters the code on pitchsite.de. They see your design directly in the browser — no download, no app. They can click anywhere and leave a comment. You reply directly in your dashboard."
       },
       {
         "number": "03",
-        "title": "Approval → Payout",
-        "body": "After delivery and approval, Pitchsite transfers your amount automatically. No delays, no excuses."
+        "title": "Sign the contract & pay",
+        "body": "When the client wants to proceed, they click \"Accept project\". They see the full contract with scope, price, and delivery date, sign digitally, and pay. The money is then held securely by Pitchsite."
+      },
+      {
+        "number": "04",
+        "title": "Deliver & get paid",
+        "body": "You deliver the finished website. The client reviews and approves. Pitchsite transfers your amount automatically. If the client doesn't respond, approval is deemed granted after 14 days — legally protected."
       }
     ]
   },

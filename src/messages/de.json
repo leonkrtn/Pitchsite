@@ -4,7 +4,7 @@
   },
   "hero": {
     "headline": "Zeig deine Arbeit.\nWerde bezahlt.\nOhne Risiko.",
-    "subline": "Pitchsite ist eine Plattform für Webdesigner: Entwurf pitchen, Vertrag unterzeichnen, Zahlung sicher abwickeln — alles an einem Ort.",
+    "subline": "Du lädst deinen Website-Entwurf hoch, dein Kunde öffnet ihn per Link, kommentiert direkt darin, unterschreibt den Vertrag und zahlt — das Geld liegt gesichert bei Pitchsite bis du lieferst.",
     "cta": "Auf die Warteliste",
     "launch": "Launch in"
   },
@@ -22,40 +22,45 @@
   },
   "solution": {
     "label": "Die Lösung",
-    "headline": "Alles was du brauchst, bevor du einen Euro überweist bekommst.",
+    "headline": "Alles was du brauchst, bevor du eine Zeile Code auslieferst.",
     "items": [
       {
-        "title": "Feedback vor dem Kauf",
-        "body": "Dein Kunde sieht den Entwurf und kommentiert direkt darin — per Klick auf jede beliebige Stelle. Kein E-Mail-Ping-Pong, keine langen Telefonate."
+        "title": "Dein Kunde sieht den Entwurf — und kommentiert direkt darin",
+        "body": "Du lädst deine HTML-Datei oder dein ZIP-Paket hoch. Pitchsite generiert einen Zugangscode. Dein Kunde gibt diesen Code auf pitchsite.de ein und sieht deinen Entwurf im Browser — ohne App, ohne Account. Er kann auf jede beliebige Stelle klicken und einen Kommentar hinterlassen. Du siehst das Feedback in Echtzeit in deinem Dashboard."
       },
       {
-        "title": "Vertrag, automatisch",
-        "body": "Leistungsumfang, Preis und Lieferdatum werden direkt in einen rechtsgültigen Kaufvertrag übernommen. Beide Seiten unterzeichnen digital."
+        "title": "Vertrag und Zahlung in einem Schritt",
+        "body": "Wenn der Kunde kaufen möchte, klickt er auf \"Auftrag annehmen\". Er sieht den vollen Leistungsumfang, das Lieferdatum und den Preis — alles was du beim Erstellen des Pitches eingetragen hast. Er erstellt einen Account, unterschreibt den rechtsgültigen Kaufvertrag digital und zahlt per Kreditkarte oder Lastschrift."
       },
       {
-        "title": "Zahlung gesichert",
-        "body": "Das Geld des Kunden liegt bei Pitchsite, bis du lieferst und die Abnahme erteilt wird. Niemand kann einfach verschwinden."
+        "title": "Das Geld liegt bei Pitchsite bis du lieferst",
+        "body": "Nach der Zahlung liegt das Geld auf dem Pitchsite-Konto — nicht beim Kunden, nicht auf deinem Konto. Du arbeitest an der fertigen Website. Wenn du fertig bist, lädst du sie hoch und der Kunde nimmt ab. Erst dann überweist Pitchsite automatisch deinen Betrag. Niemand kann verschwinden."
       }
     ]
   },
   "howitworks": {
     "label": "So funktioniert's",
-    "headline": "Drei Schritte. Kein Chaos.",
+    "headline": "Vier Schritte. Vom Entwurf zur Zahlung.",
     "steps": [
       {
         "number": "01",
         "title": "Entwurf hochladen",
-        "body": "Lade deine HTML-Datei oder dein ZIP-Paket hoch. Pitchsite generiert einen Zugangscode, den du an deinen Kunden schickst."
+        "body": "Du lädst deine HTML-Datei oder dein ZIP-Paket in Pitchsite hoch. Du gibst Preis, Leistungsumfang und Lieferdatum ein. Pitchsite generiert einen 10-stelligen Zugangscode — den schickst du deinem Kunden per WhatsApp, E-Mail oder SMS."
       },
       {
         "number": "02",
-        "title": "Kunde kommentiert & unterschreibt",
-        "body": "Dein Kunde öffnet den Entwurf mit dem Code, gibt Feedback direkt im Browser, und unterschreibt den Vertrag mit einem Klick."
+        "title": "Kunde öffnet Entwurf & gibt Feedback",
+        "body": "Dein Kunde gibt den Code auf pitchsite.de ein. Er sieht deinen Entwurf direkt im Browser — kein Download, keine App. Er kann auf jede Stelle klicken und einen Kommentar hinterlassen. Du antwortest direkt im Dashboard."
       },
       {
         "number": "03",
-        "title": "Abnahme → Auszahlung",
-        "body": "Nach Lieferung und Abnahme überweist Pitchsite deinen Betrag automatisch. Ohne Verzögerung, ohne Ausrede."
+        "title": "Kaufvertrag unterzeichnen & zahlen",
+        "body": "Wenn der Kunde kaufen will, klickt er auf \"Auftrag annehmen\". Er sieht den vollständigen Vertrag mit Leistungsumfang, Preis und Lieferdatum, unterschreibt digital und zahlt. Das Geld liegt dann gesichert bei Pitchsite."
+      },
+      {
+        "number": "04",
+        "title": "Liefern & Geld erhalten",
+        "body": "Du lieferst die fertige Website. Der Kunde prüft und erteilt die Abnahme. Pitchsite überweist deinen Betrag automatisch. Wenn der Kunde nicht reagiert, gilt die Abnahme nach 14 Tagen als erteilt — rechtlich abgesichert."
       }
     ]
   },

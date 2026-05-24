@@ -16,13 +16,13 @@ export function Navigation() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-150 ease-out ${
+      className={`fixed top-0 left-0 right-0 z-50 px-6 sm:px-8 transition-all duration-150 ease-out ${
         scrolled
           ? 'bg-white/95 backdrop-blur-sm border-b border-gray-100'
           : 'bg-transparent'
       }`}
     >
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 h-14 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto h-14 flex items-center justify-between">
         <span className="font-display font-bold text-base text-ink tracking-tight">
           Pitchsite
         </span>
