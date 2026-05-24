@@ -1,0 +1,142 @@
+{
+  "nav": {
+    "waitlist": "Join the waitlist"
+  },
+  "hero": {
+    "headline": "Show your work.\nGet paid.\nWithout risk.",
+    "subline": "Pitchsite is a platform for web designers: pitch your design, sign the contract, handle payment securely — all in one place.",
+    "cta": "Join the waitlist",
+    "launch": "Launching in"
+  },
+  "countdown": {
+    "days": "Days",
+    "hours": "Hrs",
+    "minutes": "Min",
+    "seconds": "Sec"
+  },
+  "problem": {
+    "label": "The problem",
+    "headline": "You delivered. The client went silent.",
+    "body": "Three weeks of work. The design is done, the client says \"looks great\". You deliver the finished website. And then: no reply. No feedback. No payment.\n\nNo contract, no protection, no recourse. This happens to web designers every single day.",
+    "caption": "No protection without a contract."
+  },
+  "solution": {
+    "label": "The solution",
+    "headline": "Everything you need before a single euro changes hands.",
+    "items": [
+      {
+        "title": "Feedback before purchase",
+        "body": "Your client sees the design and comments directly on it — clicking anywhere on the page. No email ping-pong, no long phone calls."
+      },
+      {
+        "title": "Contract, automatic",
+        "body": "Scope of work, price, and delivery date are transferred directly into a legally binding purchase contract. Both parties sign digitally."
+      },
+      {
+        "title": "Payment secured",
+        "body": "The client's money sits with Pitchsite until you deliver and they approve. Nobody can just disappear."
+      }
+    ]
+  },
+  "howitworks": {
+    "label": "How it works",
+    "headline": "Three steps. No chaos.",
+    "steps": [
+      {
+        "number": "01",
+        "title": "Upload your design",
+        "body": "Upload your HTML file or ZIP package. Pitchsite generates an access code that you send to your client."
+      },
+      {
+        "number": "02",
+        "title": "Client comments & signs",
+        "body": "Your client opens the design with the code, leaves feedback directly in the browser, and signs the contract with one click."
+      },
+      {
+        "number": "03",
+        "title": "Approval → Payout",
+        "body": "After delivery and approval, Pitchsite transfers your amount automatically. No delays, no excuses."
+      }
+    ]
+  },
+  "pricing": {
+    "label": "Pricing",
+    "headline": "Transparent. No hidden fees.",
+    "subline": "Pitchsite only earns when you earn — a commission on processed deals, nothing else.",
+    "plans": [
+      {
+        "name": "Free",
+        "price": "€0",
+        "period": "/ month",
+        "description": "To try it out",
+        "features": ["1 active pitch", "Up to 5 MB upload", "Client feedback & comments", "No escrow"]
+      },
+      {
+        "name": "Pro",
+        "price": null,
+        "period": null,
+        "description": "For active freelancers",
+        "badge": "Price at launch",
+        "features": ["Unlimited pitches", "Up to 100 MB upload", "Escrow included", "5% commission per deal", "Digital contract signing", "Asset internalization"]
+      },
+      {
+        "name": "Agency",
+        "price": null,
+        "period": null,
+        "description": "For teams & studios",
+        "badge": "Price at launch",
+        "features": ["Everything in Pro", "Up to 1 GB upload", "3% commission per deal", "Team access", "Priority support"]
+      }
+    ],
+    "earlybird": "Waitlist = early bird price. Guaranteed.",
+    "transparency": "How does Pitchsite make money?",
+    "provisionNote": "Commission example: On a €3,000 project (Pro plan) → €150 commission, payout €2,850"
+  },
+  "waitlist": {
+    "label": "Waitlist",
+    "headline": "Be there when it launches.",
+    "subline": "Exactly one email when Pitchsite goes live. No newsletter, no spam.",
+    "namePlaceholder": "First name",
+    "emailPlaceholder": "your@email.com",
+    "consent": "I have read the privacy policy and agree to it.",
+    "cta": "Join the waitlist",
+    "success": "Check your email.",
+    "successSub": "We sent you a confirmation. Click the link in it — done.",
+    "errorExists": "This email is already on the waitlist.",
+    "errorInvalid": "Please enter a valid email address.",
+    "errorGeneric": "Something went wrong. Please try again."
+  },
+  "footer": {
+    "rights": "© 2026 Pitchsite. All rights reserved.",
+    "impressum": "Legal Notice",
+    "datenschutz": "Privacy Policy"
+  },
+  "transparency": {
+    "title": "How does Pitchsite make money?",
+    "metaDescription": "A transparent explanation of Pitchsite's business model: commission, subscription prices, and how payment processing works.",
+    "intro": "Pitchsite makes money in exactly one way: a commission on successfully processed deals. No hidden fees, no bloated subscriptions with features locked behind paywalls.",
+    "sections": [
+      {
+        "title": "The commission",
+        "body": "When a deal is processed through Pitchsite — contract signed, payment received, approval granted — Pitchsite retains a commission from the invoice amount. This commission is 5% on the Pro plan and 3% on the Agency plan.\n\nThe freelancer sees their payout amount when creating the pitch, before activating anything. No surprises."
+      },
+      {
+        "title": "Example calculation",
+        "body": "Project: €3,000\nPlan: Pro (5% commission)\nPitchsite commission: €150\nPayout to freelancer: €2,850\n\nProject: €3,000\nPlan: Agency (3% commission)\nPitchsite commission: €90\nPayout to freelancer: €2,910"
+      },
+      {
+        "title": "Payment processing",
+        "body": "All payment processing runs through Stripe — a globally licensed payment institution. The money sits in the Pitchsite Stripe account until approval is granted. Pitchsite is not a payment institution and requires no BaFin license for this: Stripe takes on the regulatory responsibility.\n\nThe terms of service explicitly state: \"Payment processing is handled exclusively by Stripe Payments Europe Ltd., a licensed payment institution.\""
+      },
+      {
+        "title": "The subscription",
+        "body": "The subscription model (Free / Pro / Agency) covers operating costs: servers, storage, email, support. Prices will be announced at launch. Anyone on the waitlist gets the early bird price — guaranteed."
+      }
+    ]
+  },
+  "confirmed": {
+    "headline": "Confirmed.",
+    "body": "You're on the list. We'll reach out exactly once — when Pitchsite goes live.",
+    "cta": "Back to homepage"
+  }
+}

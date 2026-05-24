@@ -1,0 +1,142 @@
+{
+  "nav": {
+    "waitlist": "Warteliste beitreten"
+  },
+  "hero": {
+    "headline": "Zeig deine Arbeit.\nWerde bezahlt.\nOhne Risiko.",
+    "subline": "Pitchsite ist eine Plattform für Webdesigner: Entwurf pitchen, Vertrag unterzeichnen, Zahlung sicher abwickeln — alles an einem Ort.",
+    "cta": "Auf die Warteliste",
+    "launch": "Launch in"
+  },
+  "countdown": {
+    "days": "Tage",
+    "hours": "Std",
+    "minutes": "Min",
+    "seconds": "Sek"
+  },
+  "problem": {
+    "label": "Das Problem",
+    "headline": "Du hast geliefert. Der Kunde schweigt.",
+    "body": "Drei Wochen Arbeit. Der Entwurf ist fertig, der Kunde sagt \"sieht gut aus\". Du lieferst die fertige Website. Und dann: keine Antwort. Kein Feedback. Keine Zahlung.\n\nKein Vertrag, keine Absicherung, kein Rückhalt. Genau das passiert Webdesignern täglich.",
+    "caption": "Kein Schutz ohne Vertrag."
+  },
+  "solution": {
+    "label": "Die Lösung",
+    "headline": "Alles was du brauchst, bevor du einen Euro überweist bekommst.",
+    "items": [
+      {
+        "title": "Feedback vor dem Kauf",
+        "body": "Dein Kunde sieht den Entwurf und kommentiert direkt darin — per Klick auf jede beliebige Stelle. Kein E-Mail-Ping-Pong, keine langen Telefonate."
+      },
+      {
+        "title": "Vertrag, automatisch",
+        "body": "Leistungsumfang, Preis und Lieferdatum werden direkt in einen rechtsgültigen Kaufvertrag übernommen. Beide Seiten unterzeichnen digital."
+      },
+      {
+        "title": "Zahlung gesichert",
+        "body": "Das Geld des Kunden liegt bei Pitchsite, bis du lieferst und die Abnahme erteilt wird. Niemand kann einfach verschwinden."
+      }
+    ]
+  },
+  "howitworks": {
+    "label": "So funktioniert's",
+    "headline": "Drei Schritte. Kein Chaos.",
+    "steps": [
+      {
+        "number": "01",
+        "title": "Entwurf hochladen",
+        "body": "Lade deine HTML-Datei oder dein ZIP-Paket hoch. Pitchsite generiert einen Zugangscode, den du an deinen Kunden schickst."
+      },
+      {
+        "number": "02",
+        "title": "Kunde kommentiert & unterschreibt",
+        "body": "Dein Kunde öffnet den Entwurf mit dem Code, gibt Feedback direkt im Browser, und unterschreibt den Vertrag mit einem Klick."
+      },
+      {
+        "number": "03",
+        "title": "Abnahme → Auszahlung",
+        "body": "Nach Lieferung und Abnahme überweist Pitchsite deinen Betrag automatisch. Ohne Verzögerung, ohne Ausrede."
+      }
+    ]
+  },
+  "pricing": {
+    "label": "Preise",
+    "headline": "Transparent. Ohne versteckte Kosten.",
+    "subline": "Pitchsite verdient nur wenn du verdienst — eine Provision auf abgewickelte Deals, sonst nichts.",
+    "plans": [
+      {
+        "name": "Free",
+        "price": "0 €",
+        "period": "/ Monat",
+        "description": "Zum Ausprobieren",
+        "features": ["1 aktiver Pitch", "Bis zu 5 MB Upload", "Kunden-Feedback & Kommentare", "Kein Escrow"]
+      },
+      {
+        "name": "Pro",
+        "price": null,
+        "period": null,
+        "description": "Für aktive Freelancer",
+        "badge": "Preis bei Launch",
+        "features": ["Unbegrenzte Pitches", "Bis zu 100 MB Upload", "Escrow-Abwicklung inklusive", "5% Provision pro Deal", "Digitale Vertragsunterzeichnung", "Asset-Internalisierung"]
+      },
+      {
+        "name": "Agency",
+        "price": null,
+        "period": null,
+        "description": "Für Teams & Studios",
+        "badge": "Preis bei Launch",
+        "features": ["Alles aus Pro", "Bis zu 1 GB Upload", "3% Provision pro Deal", "Team-Zugänge", "Prioritäts-Support"]
+      }
+    ],
+    "earlybird": "Warteliste = Frühbucherpreis. Garantiert.",
+    "transparency": "Wie verdient Pitchsite genau?",
+    "provisionNote": "Provision Beispiel: Bei 3.000 € Auftrag (Pro-Plan) → 150 € Provision, Auszahlung 2.850 €"
+  },
+  "waitlist": {
+    "label": "Warteliste",
+    "headline": "Dabei sein wenn's startet.",
+    "subline": "Genau eine E-Mail wenn Pitchsite live geht. Kein Newsletter, kein Spam.",
+    "namePlaceholder": "Vorname",
+    "emailPlaceholder": "deine@email.de",
+    "consent": "Ich habe die Datenschutzerklärung gelesen und bin damit einverstanden.",
+    "cta": "Auf die Warteliste",
+    "success": "Check deine E-Mails.",
+    "successSub": "Wir haben dir eine Bestätigung geschickt. Klick den Link darin — fertig.",
+    "errorExists": "Diese E-Mail ist bereits auf der Warteliste.",
+    "errorInvalid": "Bitte eine gültige E-Mail-Adresse eingeben.",
+    "errorGeneric": "Etwas ist schiefgelaufen. Versuch es nochmal."
+  },
+  "footer": {
+    "rights": "© 2026 Pitchsite. Alle Rechte vorbehalten.",
+    "impressum": "Impressum",
+    "datenschutz": "Datenschutz"
+  },
+  "transparency": {
+    "title": "Wie verdient Pitchsite Geld?",
+    "metaDescription": "Transparente Erklärung des Pitchsite-Geschäftsmodells: Provision, Abo-Preise und wie die Zahlungsabwicklung funktioniert.",
+    "intro": "Pitchsite verdient Geld auf eine einzige Art: eine Provision auf erfolgreich abgewickelte Deals. Kein versteckter Cost, keine aufgeblähten Abo-Preise mit versteckten Features hinter Paywalls.",
+    "sections": [
+      {
+        "title": "Die Provision",
+        "body": "Wenn ein Deal über Pitchsite abgewickelt wird — Vertrag unterzeichnet, Zahlung eingegangen, Abnahme erteilt — behält Pitchsite eine Provision vom Rechnungsbetrag ein. Diese Provision beträgt 5% im Pro-Plan und 3% im Agency-Plan.\n\nDer Freelancer sieht seinen Auszahlungsbetrag bereits beim Erstellen des Pitches, bevor er irgendetwas aktiviert. Keine Überraschungen."
+      },
+      {
+        "title": "Beispielrechnung",
+        "body": "Auftrag: 3.000 €\nPlan: Pro (5% Provision)\nPitchsite-Provision: 150 €\nAuszahlung an den Freelancer: 2.850 €\n\nAuftrag: 3.000 €\nPlan: Agency (3% Provision)\nPitchsite-Provision: 90 €\nAuszahlung an den Freelancer: 2.910 €"
+      },
+      {
+        "title": "Die Zahlungsabwicklung",
+        "body": "Die gesamte Zahlungsabwicklung läuft über Stripe — ein weltweit zugelassenes Zahlungsinstitut. Das Geld liegt auf dem Pitchsite-Stripe-Konto, bis die Abnahme erfolgt. Pitchsite ist kein Zahlungsinstitut und benötigt dafür keine BaFin-Lizenz: Stripe übernimmt die regulatorische Verantwortung.\n\nDie AGB enthalten explizit: \"Die Zahlungsabwicklung erfolgt ausschließlich über Stripe Payments Europe Ltd., ein zugelassenes Zahlungsinstitut.\""
+      },
+      {
+        "title": "Das Abo",
+        "body": "Das Abo-Modell (Free / Pro / Agency) deckt die Betriebskosten: Server, Speicher, E-Mail, Support. Die Preise werden zum Launch bekanntgegeben. Wer sich auf der Warteliste einträgt, bekommt den Frühbucherpreis — garantiert."
+      }
+    ]
+  },
+  "confirmed": {
+    "headline": "Bestätigt.",
+    "body": "Du bist auf der Liste. Wir melden uns genau einmal — wenn Pitchsite live geht.",
+    "cta": "Zurück zur Startseite"
+  }
+}
