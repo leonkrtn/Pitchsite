@@ -3,6 +3,7 @@ import { Hero } from '@/components/sections/Hero'
 import { Problem } from '@/components/sections/Problem'
 import { Solution } from '@/components/sections/Solution'
 import { HowItWorks } from '@/components/sections/HowItWorks'
+import { DemoUpload } from '@/components/sections/DemoUpload'
 import { Pricing } from '@/components/sections/Pricing'
 import { WaitlistSection } from '@/components/sections/WaitlistSection'
 import { Footer } from '@/components/Footer'
@@ -16,6 +17,7 @@ export default function HomePage() {
         <Problem />
         <Solution />
         <HowItWorks />
+        <DemoUpload />
         <Pricing />
         <WaitlistSection />
       </main>
