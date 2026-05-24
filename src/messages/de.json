@@ -99,7 +99,8 @@
     ],
     "earlybird": "Warteliste = Frühbucherpreis. Garantiert.",
     "transparency": "Wie verdient Pitchsite genau?",
-    "provisionNote": "Provision Beispiel: Bei 3.000 € Auftrag (Pro-Plan) → 150 € Provision, Auszahlung 2.850 €"
+    "provisionNote": "Provision Beispiel: Bei 3.000 € Auftrag (Pro-Plan) → 150 € Provision, Auszahlung 2.850 €",
+    "stripeNote": "Zzgl. Stripe-Zahlungsgebühren (~1,4 % + 0,25 € Kreditkarte · ~0,4 % + 0,25 € SEPA). Werden vor Abschluss transparent ausgewiesen."
   },
   "waitlist": {
     "label": "Warteliste",
@@ -140,6 +141,36 @@
       {
         "title": "Das Abo",
         "body": "Das Abo-Modell (Free / Pro / Agency) deckt die Betriebskosten: Server, Speicher, E-Mail, Support. Die Preise werden zum Launch bekanntgegeben. Wer sich auf der Warteliste einträgt, bekommt den Frühbucherpreis — garantiert."
+      }
+    ]
+  },
+  "faq": {
+    "label": "Häufige Fragen",
+    "headline": "Alles was du wissen musst.",
+    "items": [
+      {
+        "q": "Ist der Vertrag rechtsgültig — auch in Österreich und der Schweiz?",
+        "a": "Ja. Pitchsite ist für den gesamten DACH-Raum ausgelegt. Der digital unterzeichnete Kaufvertrag entspricht den Anforderungen des deutschen BGB, des österreichischen ABGB und des schweizerischen OR — in allen drei Ländern vor Gericht durchsetzbar. Zahlungen werden in EUR und CHF unterstützt."
+      },
+      {
+        "q": "Was passiert wenn der Kunde die Abnahme verweigert?",
+        "a": "Der Kunde muss konkrete Mängel benennen, die vom vereinbarten Leistungsumfang abweichen. Allgemeine Unzufriedenheit reicht rechtlich nicht aus. Reagiert er 14 Tage lang nicht, gilt die Abnahme automatisch als erteilt — das ist vertraglich so festgehalten. Bei echten Streitfällen vermittelt Pitchsite anhand des schriftlich fixierten Leistungsumfangs."
+      },
+      {
+        "q": "Kommen Stripe-Gebühren noch oben drauf?",
+        "a": "Ja — Stripe erhebt zusätzlich zur Pitchsite-Provision ca. 1,4 % + 0,25 € (Kreditkarte EU) oder 0,4 % + 0,25 € (SEPA-Lastschrift). Diese werden dir transparent vor Abschluss angezeigt, damit du deinen Preis von Anfang an richtig kalkulieren kannst. Pitchsite verdient an der Provision — nicht an versteckten Zahlungsgebühren."
+      },
+      {
+        "q": "Was wenn ich das vereinbarte Lieferdatum nicht einhalte?",
+        "a": "Das Lieferdatum ist Vertragsbestandteil — aber keine Falle. Wenn du mehr Zeit brauchst, kannst du dem Kunden über Pitchsite eine neue Deadline vorschlagen. Er muss zustimmen, das Geld bleibt solange gesichert. Willkürliche Zahlungsverweigerung wegen geringer Verzögerungen ist damit ausgeschlossen."
+      },
+      {
+        "q": "Wo werden meine Daten gespeichert? DSGVO-konform?",
+        "a": "Alle Daten liegen auf Servern in der EU (Frankfurt). Vollständig DSGVO-konform — ein Auftragsverarbeitungsvertrag (AVV) ist auf Anfrage erhältlich. Zahlungsdaten verarbeitet ausschließlich Stripe; Pitchsite sieht und speichert keine Kreditkartendaten."
+      },
+      {
+        "q": "Kann ich Webflow- oder Figma-Designs einreichen?",
+        "a": "Ja. Webflow-Projekte lädst du einfach als ZIP-Export hoch — Pitchsite löst alle Assets automatisch auf. Figma-Designs lassen sich per Share-Link direkt einbetten. Beide Wege funktionieren ohne zusätzliche Software oder Plugins."
       }
     ]
   },

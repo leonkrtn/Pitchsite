@@ -129,8 +129,11 @@ export function Pricing() {
 
         <ScrollReveal delay={0.2}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-gray-100">
-            <p className="text-sm text-muted">{t('provisionNote')}</p>
-            <p className="text-sm font-semibold text-ink">{t('earlybird')}</p>
+            <div>
+              <p className="text-sm text-muted">{t('provisionNote')}</p>
+              <p className="text-xs text-muted/70 mt-1">{t('stripeNote')}</p>
+            </div>
+            <p className="text-sm font-semibold text-ink shrink-0">{t('earlybird')}</p>
           </div>
 
           <div className="mt-6">

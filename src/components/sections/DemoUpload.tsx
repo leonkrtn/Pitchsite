@@ -32,6 +32,16 @@ interface PendingPin {
   absY: number   // absolute pixel Y in iframe document
 }
 
+// ── Figma ─────────────────────────────────────────────────────────────────────
+
+function isFigmaUrl(url: string): boolean {
+  return /^https:\/\/(www\.)?figma\.com\/(file|design|proto)\//.test(url)
+}
+
+function toFigmaEmbedUrl(url: string): string {
+  return `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(url)}`
+}
+
 // ── Blob registry ─────────────────────────────────────────────────────────────
 
 const blobRegistry: string[] = []
@@ -386,6 +396,8 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
 
 export function DemoUpload() {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' })
+  const [sourceType, setSourceType] = useState<'file' | 'figma'>('file')
+  const [figmaInput, setFigmaInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
@@ -419,6 +431,24 @@ export function DemoUpload() {
   const onInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''
   }, [handleFile])
+
+  const handleFigmaSubmit = useCallback(() => {
+    const url = figmaInput.trim()
+    if (!isFigmaUrl(url)) {
+      setPhase({ kind: 'error', message: 'Bitte einen gültigen Figma-Share-Link einfügen (figma.com/design/… oder figma.com/proto/…).' })
+      return
+    }
+    setPhase({ kind: 'rendering', filename: 'Figma-Design', src: toFigmaEmbedUrl(url) })
+  }, [figmaInput])
+
+  const switchSource = useCallback((type: 'file' | 'figma') => {
+    revokeAll()
+    setPhase({ kind: 'idle' })
+    setComments([]); setPendingPin(null); setActiveId(null); setCommentMode(false)
+    iframeScrollRef.current = { x: 0, y: 0 }
+    setSourceType(type)
+    setFigmaInput('')
+  }, [])
 
   const positionPins = useCallback(() => {
     const iw = iframeRef.current?.offsetWidth ?? 760
@@ -515,16 +545,61 @@ export function DemoUpload() {
           <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink leading-tight mb-4 max-w-xl">
             Lad deinen Entwurf hoch. Sieh was dein Kunde sieht.
           </h2>
-          <p className="text-muted text-base leading-relaxed max-w-xl mb-12">
-            Einfach eine <strong className="text-ink font-medium">.html</strong> oder{' '}
-            <strong className="text-ink font-medium">.zip</strong> Datei hochladen — dein Entwurf öffnet sich direkt im Browser.
+          <p className="text-muted text-base leading-relaxed max-w-xl mb-8">
+            HTML, ZIP, Webflow-Export oder Figma-Link — dein Entwurf öffnet sich direkt im Browser.
             Alles bleibt lokal, nichts wird hochgeladen.
           </p>
+
+          {/* Source type tabs */}
+          <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit mb-8">
+            {(['file', 'figma'] as const).map(type => (
+              <button key={type} onClick={() => switchSource(type)}
+                className={['px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150',
+                  sourceType === type ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink'].join(' ')}>
+                {type === 'file' ? 'Datei / ZIP' : 'Figma-Link'}
+              </button>
+            ))}
+          </div>
         </motion.div>
 
         <AnimatePresence mode="wait">
+          {/* ── Figma input ── */}
+          {sourceType === 'figma' && (phase.kind === 'idle' || phase.kind === 'error') && (
+            <motion.div key="figma-input" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}
+              className="border-2 border-dashed border-gray-200 rounded-2xl p-12 sm:p-16 flex flex-col items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <svg className="w-7 h-7 text-gray-400" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/>
+                  <rect x="3" y="13" width="8" height="8" rx="4" fill="currentColor" opacity=".6"/>
+                  <rect x="13" y="3" width="8" height="8" rx="4" fill="currentColor" opacity=".6"/>
+                  <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" opacity=".9"/>
+                </svg>
+              </div>
+              <p className="font-semibold text-ink text-lg">Figma Share-Link einfügen</p>
+              <div className="w-full max-w-md flex gap-2">
+                <input
+                  type="url"
+                  value={figmaInput}
+                  onChange={e => setFigmaInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleFigmaSubmit() }}
+                  placeholder="https://www.figma.com/design/…"
+                  className="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-royal/25 focus:border-blue-royal/60 transition-colors"
+                />
+                <button onClick={handleFigmaSubmit}
+                  className="bg-blue-royal text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-colors shrink-0">
+                  Öffnen
+                </button>
+              </div>
+              {phase.kind === 'error' && (
+                <p className="text-sm text-red-600 font-medium">{phase.message}</p>
+              )}
+              <p className="text-xs text-muted/70">Design- und Prototype-Links werden unterstützt</p>
+            </motion.div>
+          )}
+
           {/* ── Drop zone ── */}
-          {(phase.kind === 'idle' || phase.kind === 'dragging') && (
+          {sourceType === 'file' && (phase.kind === 'idle' || phase.kind === 'dragging') && (
             <motion.div key="drop" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}
               className={['border-2 border-dashed rounded-2xl p-12 sm:p-20 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200',
@@ -542,7 +617,7 @@ export function DemoUpload() {
               </div>
               <p className="font-semibold text-ink text-lg mb-2">{isDragging ? 'Datei loslassen' : 'HTML oder ZIP ablegen'}</p>
               <p className="text-muted text-sm">oder <span className="text-blue-royal font-medium">Datei auswählen</span></p>
-              <p className="text-muted/50 text-xs mt-3">.html · .zip · Bleibt im Browser</p>
+              <p className="text-muted/50 text-xs mt-3">.html · .zip · Webflow-Export · Bleibt im Browser</p>
             </motion.div>
           )}
 
@@ -679,8 +754,8 @@ export function DemoUpload() {
             </motion.div>
           )}
 
-          {/* ── Error ── */}
-          {phase.kind === 'error' && (
+          {/* ── Error (file mode only — figma errors show inline) ── */}
+          {phase.kind === 'error' && sourceType === 'file' && (
             <motion.div key="err" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }}
               className="border-2 border-red-200 rounded-2xl p-12 flex flex-col items-center gap-4 bg-red-50">

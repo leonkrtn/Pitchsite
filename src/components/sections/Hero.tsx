@@ -35,6 +35,12 @@ export function Hero() {
     <section className="min-h-screen flex flex-col justify-center pt-14 px-6 sm:px-8">
       <div className="max-w-5xl mx-auto w-full py-24 sm:py-32">
         <FadeUp delay={0.05}>
+          <div className="mb-5">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-royal bg-blue-light px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+              DE · AT · CH
+            </span>
+          </div>
           <h1 className="font-display font-extrabold text-5xl sm:text-6xl lg:text-7xl text-ink leading-[1.05] tracking-tight mb-6">
             {lines.map((line, i) => (
               <span key={i} className="block">

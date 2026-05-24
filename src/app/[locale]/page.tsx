@@ -5,6 +5,7 @@ import { Solution } from '@/components/sections/Solution'
 import { HowItWorks } from '@/components/sections/HowItWorks'
 import { DemoUpload } from '@/components/sections/DemoUpload'
 import { Pricing } from '@/components/sections/Pricing'
+import { FAQ } from '@/components/sections/FAQ'
 import { WaitlistSection } from '@/components/sections/WaitlistSection'
 import { Footer } from '@/components/Footer'
 
@@ -19,6 +20,7 @@ export default function HomePage() {
         <HowItWorks />
         <DemoUpload />
         <Pricing />
+        <FAQ />
         <WaitlistSection />
       </main>
       <Footer />

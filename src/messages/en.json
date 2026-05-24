@@ -99,7 +99,8 @@
     ],
     "earlybird": "Waitlist = early bird price. Guaranteed.",
     "transparency": "How does Pitchsite make money?",
-    "provisionNote": "Commission example: On a €3,000 project (Pro plan) → €150 commission, payout €2,850"
+    "provisionNote": "Commission example: On a €3,000 project (Pro plan) → €150 commission, payout €2,850",
+    "stripeNote": "Plus Stripe payment fees (~1.4% + €0.25 credit card · ~0.4% + €0.25 SEPA). Shown transparently before checkout."
   },
   "waitlist": {
     "label": "Waitlist",
@@ -140,6 +141,36 @@
       {
         "title": "The subscription",
         "body": "The subscription model (Free / Pro / Agency) covers operating costs: servers, storage, email, support. Prices will be announced at launch. Anyone on the waitlist gets the early bird price — guaranteed."
+      }
+    ]
+  },
+  "faq": {
+    "label": "FAQ",
+    "headline": "Everything you need to know.",
+    "items": [
+      {
+        "q": "Is the contract legally valid — including in Austria and Switzerland?",
+        "a": "Yes. Pitchsite is designed for the entire DACH region. The digitally signed contract meets the requirements of German BGB, Austrian ABGB, and Swiss OR — enforceable in courts across all three countries. Payments are supported in EUR and CHF."
+      },
+      {
+        "q": "What happens if the client refuses to approve delivery?",
+        "a": "The client must name specific defects that deviate from the agreed scope of work. General dissatisfaction isn't legally sufficient. If they don't respond within 14 days, approval is automatically granted — that's stipulated in the contract. For genuine disputes, Pitchsite mediates based on the written scope of work."
+      },
+      {
+        "q": "Are Stripe fees on top of the Pitchsite commission?",
+        "a": "Yes — Stripe charges approximately 1.4% + €0.25 (EU credit card) or 0.4% + €0.25 (SEPA direct debit) on top of the Pitchsite commission. These are shown to you transparently before finalizing, so you can price your projects correctly from the start. Pitchsite earns from the commission — not from hidden payment fees."
+      },
+      {
+        "q": "What if I miss the agreed delivery date?",
+        "a": "The delivery date is part of the contract — but not a trap. If you need more time, you can propose a new deadline to the client via Pitchsite. They need to agree, and the money stays secured in the meantime. Arbitrary payment refusals due to minor delays are ruled out."
+      },
+      {
+        "q": "Where is my data stored? Is it GDPR-compliant?",
+        "a": "All data is stored on servers in the EU (Frankfurt). Fully GDPR-compliant — a data processing agreement (DPA) is available on request. Payment data is processed exclusively by Stripe; Pitchsite never sees or stores credit card data."
+      },
+      {
+        "q": "Can I submit Webflow or Figma designs?",
+        "a": "Yes. Webflow projects can be uploaded as a ZIP export — Pitchsite automatically resolves all assets. Figma designs can be embedded directly via share link. Both work without additional software or plugins."
       }
     ]
   },
