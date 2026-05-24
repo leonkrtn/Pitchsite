@@ -22,6 +22,10 @@ html {
   color: #ffffff;
 }
 
+@keyframes shimmer {
+  to { transform: translateX(200%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
