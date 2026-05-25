@@ -23,8 +23,8 @@ export function Navigation() {
       }`}
     >
       <div className="max-w-5xl mx-auto h-14 flex items-center justify-between">
-        <span className="font-display font-bold text-base text-ink tracking-tight">
-          Pitchsite
+        <span className="font-display font-bold text-base tracking-tight">
+          <span className="text-ink">Pitch</span><span className="text-blue-royal">site</span>
         </span>
 
         <div className="flex items-center gap-6">

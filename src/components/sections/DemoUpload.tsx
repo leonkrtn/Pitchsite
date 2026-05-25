@@ -497,7 +497,7 @@ function PaymentFlow({ step, onStep, onClose }: {
 
       {/* Header */}
       <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3 shrink-0">
-        <span className="font-display font-bold text-sm text-blue-royal">Pitchsite</span>
+        <span className="font-display font-bold text-sm"><span className="text-ink">Pitch</span><span className="text-blue-royal">site</span></span>
         <div className="flex items-center gap-1 ml-auto">
           {labels.map((label, i) => (
             <div key={i} className="flex items-center">
