@@ -6,6 +6,15 @@ import JSZip from 'jszip'
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const
 
+const DEMO_CODE = 'A4K9-X2Q3M'
+const DEMO = {
+  freelancer: 'Max Mustermann',
+  title: 'Unternehmenswebsite',
+  scope: 'Startseite, Über uns, Kontakt — mobiloptimiert',
+  delivery: '14 Werktage nach Auftragserteilung',
+  price: '2.400 €',
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Phase =
@@ -392,6 +401,193 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
   )
 }
 
+// ── Payment Flow ──────────────────────────────────────────────────────────────
+
+type PayStep = 'offer' | 'pay' | 'done'
+
+function PaymentFlow({ step, onStep, onClose }: {
+  step: PayStep; onStep: (s: PayStep) => void; onClose: () => void
+}) {
+  const [sigName, setSigName] = useState('')
+  const stepIdx = ['offer', 'pay', 'done'].indexOf(step)
+  const labels = ['Angebot', 'Zahlung', 'Bestätigt']
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 32 }} transition={{ duration: 0.25, ease: EASE_OUT }}
+      className="absolute inset-0 z-30 bg-white flex flex-col overflow-hidden">
+
+      {/* Header */}
+      <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3 shrink-0">
+        <span className="font-display font-bold text-sm text-blue-royal">Pitchsite</span>
+        <div className="flex items-center gap-1 ml-auto">
+          {labels.map((label, i) => (
+            <div key={i} className="flex items-center">
+              {i > 0 && <div className="w-6 h-px bg-gray-200 mx-1" />}
+              <div className="flex items-center gap-1">
+                <div className={['w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold shrink-0 transition-colors',
+                  i < stepIdx ? 'bg-green-500 text-white' : i === stepIdx ? 'bg-blue-royal text-white' : 'bg-gray-100 text-gray-400'].join(' ')}>
+                  {i < stepIdx ? '✓' : i + 1}
+                </div>
+                <span className={['text-[10px] font-medium hidden sm:block transition-colors', i <= stepIdx ? 'text-ink' : 'text-muted'].join(' ')}>{label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        {step !== 'done' && (
+          <button onClick={onClose} className="ml-2 text-muted hover:text-ink transition-colors shrink-0">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+      </div>
+
+      {/* Steps */}
+      <div className="flex-1 overflow-y-auto">
+        <AnimatePresence mode="wait">
+
+          {step === 'offer' && (
+            <motion.div key="offer" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18, ease: EASE_OUT }}
+              className="px-5 py-5 max-w-md mx-auto">
+              <p className="text-[11px] text-muted mb-0.5">Angebot von</p>
+              <p className="font-display font-bold text-lg text-ink mb-4">{DEMO.freelancer}</p>
+              <div className="border border-gray-100 rounded-2xl overflow-hidden mb-4">
+                <div className="px-4 py-3 border-b border-gray-50">
+                  <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Leistung</p>
+                  <p className="text-sm font-semibold text-ink">{DEMO.title}</p>
+                  <p className="text-xs text-muted mt-0.5">{DEMO.scope}</p>
+                </div>
+                <div className="px-4 py-3 border-b border-gray-50">
+                  <p className="text-[10px] text-muted uppercase tracking-wider mb-0.5">Lieferdatum</p>
+                  <p className="text-sm text-ink">{DEMO.delivery}</p>
+                </div>
+                <div className="px-4 py-3 flex items-center justify-between">
+                  <p className="text-[10px] text-muted uppercase tracking-wider">Gesamtpreis</p>
+                  <p className="font-display font-bold text-lg text-ink">{DEMO.price}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-100 rounded-xl p-3 mb-5">
+                <svg className="w-4 h-4 text-blue-royal shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+                <p className="text-xs text-blue-900/70 leading-relaxed">Dein Geld liegt gesichert bei Pitchsite — und wird erst nach deiner Abnahme freigegeben.</p>
+              </div>
+              <button onClick={() => onStep('pay')}
+                className="w-full bg-blue-royal text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition-colors text-sm">
+                Auftrag annehmen & zahlen →
+              </button>
+            </motion.div>
+          )}
+
+          {step === 'pay' && (
+            <motion.div key="pay" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.18, ease: EASE_OUT }}
+              className="px-5 py-5 max-w-md mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <p className="font-display font-bold text-lg text-ink">Zahlung</p>
+                <div className="text-right">
+                  <p className="text-[10px] text-muted">Betrag</p>
+                  <p className="font-bold text-sm text-ink">{DEMO.price}</p>
+                </div>
+              </div>
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-3 text-xs text-muted leading-relaxed">
+                <p className="font-semibold text-ink mb-1 text-[11px]">Kaufvertrag</p>
+                Ich beauftrage {DEMO.freelancer} mit „{DEMO.title}" zum Festpreis von {DEMO.price}, Lieferung {DEMO.delivery}. Die Zahlung wird über Pitchsite abgewickelt und erst nach meiner Abnahme freigegeben.
+              </div>
+              <div className="mb-3">
+                <label className="block text-xs font-semibold text-ink mb-1">Dein Name (digitale Unterschrift)</label>
+                <input type="text" value={sigName} onChange={e => setSigName(e.target.value)}
+                  placeholder="Vorname Nachname"
+                  className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-royal/25 focus:border-blue-royal/60 transition-colors" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-ink mb-1.5">Zahlungsmethode</label>
+                <div className="space-y-1.5 mb-2.5">
+                  <div className="border border-blue-royal/40 bg-blue-50/30 rounded-xl px-3 py-2 flex items-center gap-2.5">
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-royal flex items-center justify-center shrink-0">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-royal" />
+                    </div>
+                    <span className="text-sm text-ink">Kreditkarte</span>
+                    <div className="ml-auto flex gap-1 items-center">
+                      <span className="text-[8px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded">VISA</span>
+                      <div className="flex items-center"><div className="w-3 h-3 rounded-full bg-red-400" /><div className="w-3 h-3 rounded-full bg-yellow-400 -ml-1.5" /></div>
+                    </div>
+                  </div>
+                  <div className="border border-gray-100 bg-gray-50 rounded-xl px-3 py-2 flex items-center gap-2.5">
+                    <div className="w-3.5 h-3.5 rounded-full border-2 border-gray-300 shrink-0" />
+                    <span className="text-sm text-muted">SEPA-Lastschrift</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="border border-gray-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                    </svg>
+                    <span className="text-sm font-mono text-gray-300 tracking-widest">•••• •••• •••• 4242</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="border border-gray-200 rounded-xl px-3 py-2.5"><span className="text-sm font-mono text-gray-300">12 / 27</span></div>
+                    <div className="border border-gray-200 rounded-xl px-3 py-2.5"><span className="text-sm font-mono text-gray-300">•••</span></div>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => onStep('done')}
+                className="w-full bg-blue-royal text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition-colors text-sm flex items-center justify-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                {DEMO.price} sicher zahlen
+              </button>
+              <p className="text-center text-[10px] text-muted mt-1.5">Gesichert durch Stripe · SSL-verschlüsselt</p>
+              <button onClick={() => onStep('offer')} className="w-full text-xs text-muted hover:text-ink mt-2 transition-colors py-1">← Zurück</button>
+            </motion.div>
+          )}
+
+          {step === 'done' && (
+            <motion.div key="done" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }} transition={{ duration: 0.25, ease: EASE_OUT }}
+              className="px-5 py-5 max-w-md mx-auto flex flex-col items-center text-center">
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.1 }}
+                className="w-14 h-14 rounded-2xl bg-green-500 flex items-center justify-center mb-4 mt-2">
+                <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              </motion.div>
+              <p className="font-display font-bold text-xl text-ink mb-1.5">Auftrag erteilt!</p>
+              <p className="text-sm text-muted mb-5 leading-relaxed max-w-xs">{DEMO.freelancer} wurde benachrichtigt und beginnt mit der Arbeit.</p>
+              <div className="w-full border border-gray-100 rounded-2xl overflow-hidden mb-5 text-left">
+                <div className="px-4 py-3 flex justify-between border-b border-gray-50">
+                  <p className="text-xs text-muted">Betrag in Escrow</p>
+                  <p className="text-sm font-bold text-ink">{DEMO.price}</p>
+                </div>
+                <div className="px-4 py-3 flex justify-between border-b border-gray-50">
+                  <p className="text-xs text-muted">Freigabe</p>
+                  <p className="text-xs text-ink">Nach deiner Abnahme</p>
+                </div>
+                <div className="px-4 py-3 flex justify-between">
+                  <p className="text-xs text-muted">Referenz</p>
+                  <p className="text-xs font-mono text-ink">#PT-{DEMO_CODE}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-2.5 bg-green-50 border border-green-100 rounded-xl p-3 w-full mb-5">
+                <svg className="w-4 h-4 text-green-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+                <p className="text-xs text-green-800 leading-relaxed text-left">Dein Geld liegt sicher bei Pitchsite und wird erst nach deiner Abnahme an {DEMO.freelancer} überwiesen.</p>
+              </div>
+              <button onClick={onClose} className="text-sm text-blue-royal font-semibold hover:underline">Zurück zur Vorschau</button>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  )
+}
+
 // ── Main export ───────────────────────────────────────────────────────────────
 
 export function DemoUpload() {
@@ -400,6 +596,9 @@ export function DemoUpload() {
   const [figmaInput, setFigmaInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  const [showPayment, setShowPayment] = useState(false)
+  const [paymentStep, setPaymentStep] = useState<PayStep>('offer')
 
   const [commentMode, setCommentMode] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
@@ -654,6 +853,22 @@ export function DemoUpload() {
                   {phase.kind === 'rendering' && <div className="w-3 h-3 border-[1.5px] border-blue-royal border-t-transparent rounded-full animate-spin shrink-0" />}
                   <span className="text-xs text-muted font-mono truncate">{phase.filename}</span>
                 </div>
+                {phase.kind === 'preview' && (
+                  <>
+                    <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-md px-2.5 py-1 shrink-0">
+                      <span className="text-[9px] text-muted uppercase tracking-wide">Code</span>
+                      <span className="text-[11px] font-mono font-bold text-ink tracking-wider">{DEMO_CODE}</span>
+                    </div>
+                    <button
+                      onClick={() => { setPaymentStep('offer'); setShowPayment(true) }}
+                      className="bg-green-500 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg hover:bg-green-600 transition-colors shrink-0 flex items-center gap-1.5">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      Angebot annehmen
+                    </button>
+                  </>
+                )}
                 <button onClick={reset} className="text-xs text-muted hover:text-ink transition-colors flex items-center gap-1 shrink-0">
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -663,7 +878,7 @@ export function DemoUpload() {
               </div>
 
               {/* Content row */}
-              <div className="flex h-[580px]">
+              <div className="relative flex h-[580px]">
                 {/* Preview + overlay */}
                 <div className={['relative flex-1 min-w-0 overflow-hidden transition-shadow duration-200',
                   commentMode ? 'ring-2 ring-inset ring-blue-royal/20' : ''].join(' ')}>
@@ -753,6 +968,14 @@ export function DemoUpload() {
                   onResolve={resolveComment} onDelete={deleteComment}
                   onToggleMode={() => { setCommentMode(m => !m); setPendingPin(null) }}
                 />
+
+                {/* Payment flow overlay */}
+                <AnimatePresence>
+                  {showPayment && (
+                    <PaymentFlow step={paymentStep} onStep={setPaymentStep}
+                      onClose={() => { setShowPayment(false); setPaymentStep('offer') }} />
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
           )}
