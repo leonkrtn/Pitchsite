@@ -74,7 +74,7 @@ export default async function TransparenzPage({
                         <p className="text-[10px] font-bold text-blue-royal uppercase tracking-widest mb-3">{ex.label}</p>
                         <div className="space-y-1">
                           {ex.lines.map((line, l) => (
-                            <p key={l} className={`text-sm font-mono leading-relaxed ${line.startsWith('Provision') || line.startsWith('Commission') ? 'text-ink font-semibold' : 'text-muted'}`}>
+                            <p key={l} className={`text-sm font-mono leading-relaxed ${line.startsWith('Auszahlung') || line.startsWith('Payout') ? 'text-ink font-semibold' : 'text-muted'}`}>
                               {line}
                             </p>
                           ))}
