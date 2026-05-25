@@ -1009,22 +1009,25 @@ export function DemoUpload() {
                     </AnimatePresence>
                   </div>
 
-                  {/* Round sidebar toggle — bottom-left of preview */}
-                  <button
-                    onClick={() => setSidebarCollapsed(c => !c)}
-                    title={sidebarCollapsed ? 'Seitenleiste öffnen' : 'Seitenleiste schließen'}
-                    className="absolute bottom-4 left-4 z-30 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-150"
-                  >
-                    {sidebarCollapsed ? (
-                      <svg className="w-4 h-4 text-ink" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                      </svg>
+                  {/* Round sidebar toggle — bottom-right, only visible when sidebar is closed */}
+                  <AnimatePresence>
+                    {sidebarCollapsed && (
+                      <motion.button
+                        key="sidebar-toggle"
+                        initial={{ opacity: 0, scale: 0.7 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.7 }}
+                        transition={{ duration: 0.18, ease: EASE_OUT }}
+                        onClick={() => setSidebarCollapsed(false)}
+                        title="Seitenleiste öffnen"
+                        className="absolute bottom-4 right-4 z-30 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95 transition-shadow duration-150"
+                      >
+                        <svg className="w-4 h-4 text-ink" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+                        </svg>
+                      </motion.button>
                     )}
-                  </button>
+                  </AnimatePresence>
                 </div>
 
                 {/* Sidebar */}
