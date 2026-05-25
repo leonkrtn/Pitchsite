@@ -261,6 +261,7 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
   onAccept: () => void
 }) {
   const [showResolved, setShowResolved] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
 
   const open = comments.filter(c => !c.resolved)
@@ -274,7 +275,22 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
   }, [activeId])
 
   return (
-    <div className="w-[264px] shrink-0 border-l border-gray-200 bg-white flex flex-col">
+    <motion.div
+      initial={{ width: 264 }}
+      animate={{ width: collapsed ? 32 : 264 }}
+      transition={{ duration: 0.25, ease: EASE_OUT }}
+      className="shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-hidden"
+    >
+      {collapsed ? (
+        <div className="flex flex-col items-center pt-3">
+          <button onClick={() => setCollapsed(false)} title="Seitenleiste öffnen"
+            className="w-6 h-14 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
+            <svg className="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+        </div>
+      ) : <>
       {/* Pitchsite client panel */}
       <div className="px-3 pt-3 pb-2.5 border-b border-gray-200 shrink-0 bg-gray-50/60">
         <div className="flex items-center gap-2 mb-2">
@@ -286,6 +302,12 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
             <span className="text-[9px] text-muted uppercase tracking-wide">Code</span>
             <span className="text-[10px] font-mono font-bold text-ink">{DEMO_CODE}</span>
           </div>
+          <button onClick={() => setCollapsed(true)} title="Seitenleiste schließen"
+            className="w-5 h-5 rounded flex items-center justify-center text-muted/40 hover:text-muted hover:bg-gray-200 transition-colors shrink-0">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
         </div>
         <button onClick={onAccept}
           className="w-full bg-green-500 text-white text-xs font-semibold py-1.5 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-1.5">
@@ -427,7 +449,8 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
           )}
         </AnimatePresence>
       </div>
-    </div>
+      </>}
+    </motion.div>
   )
 }
 
@@ -446,6 +469,11 @@ function PaymentFlow({ step, onStep, onClose }: {
     <motion.div initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 32 }} transition={{ duration: 0.25, ease: EASE_OUT }}
       className="absolute inset-0 z-30 bg-white flex flex-col overflow-hidden">
+
+      {/* Demo badge */}
+      <div className="absolute bottom-3 left-4 z-10 pointer-events-none">
+        <span className="text-[9px] font-medium text-muted/40 tracking-wide">Demo</span>
+      </div>
 
       {/* Header */}
       <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-3 shrink-0">
