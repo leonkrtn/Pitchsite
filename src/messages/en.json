@@ -132,20 +132,20 @@
       },
       {
         "title": "Example calculation",
-        "body": "Pro plan (5% commission) · Project volume €3,000",
+        "body": "Pro plan (5% commission) · Project volume €1,000",
         "examples": [
           {
             "label": "One-time payment",
-            "lines": ["Project: €3,000", "Commission (5%): €150", "Payout: €2,850"]
+            "lines": ["Project: €1,000", "Commission (5%): €50", "Payout: €950 *"],
+            "hint": "* Plus Stripe payment fees (~1.4% + €0.25 credit card · ~0.4% + €0.25 SEPA). Shown transparently before checkout."
           },
           {
             "label": "Monthly payment (subscription)",
-            "lines": ["12 × €250 / month", "Total (months 1–12): €3,000", "Commission (5%): €150", "Payout: €2,850"],
-            "hint": "Commission is calculated once on the combined sum of the first 12 monthly payments — not on each individual installment."
+            "lines": ["4 × €250 / month", "Total (months 1–4): €1,000", "Commission (5%): €50", "Payout: €950 *"],
+            "hint": "Commission is calculated once on the combined sum of the first 4 monthly payments — not on each individual installment. * Plus Stripe payment fees (~1.4% + €0.25 credit card · ~0.4% + €0.25 SEPA)."
           }
         ],
-        "footnote": "Agency plan (3% commission): On a €3,000 project → €90 commission → payout €2,910",
-        "note": "Plus Stripe payment fees: ~1.4% + €0.25 (EU credit card) or ~0.4% + €0.25 (SEPA direct debit). These are shown transparently before checkout — so you can price your projects correctly from the start."
+        "footnote": "Agency plan (3% commission): On a €1,000 project → €30 commission → payout €970 *"
       },
       {
         "title": "Payment processing",

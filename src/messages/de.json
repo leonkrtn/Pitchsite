@@ -132,20 +132,20 @@
       },
       {
         "title": "Beispielrechnung",
-        "body": "Pro-Plan (5 % Provision) · Projektvolumen 3.000 €",
+        "body": "Pro-Plan (5 % Provision) · Projektvolumen 1.000 €",
         "examples": [
           {
             "label": "Einmalzahlung",
-            "lines": ["Auftrag: 3.000 €", "Provision (5 %): 150 €", "Auszahlung: 2.850 €"]
+            "lines": ["Auftrag: 1.000 €", "Provision (5 %): 50 €", "Auszahlung: 950 € *"],
+            "hint": "* Zzgl. Stripe-Zahlungsgebühren (~1,4 % + 0,25 € Kreditkarte · ~0,4 % + 0,25 € SEPA). Werden dir vor Abschluss transparent ausgewiesen."
           },
           {
             "label": "Monatliche Zahlung (Abo)",
-            "lines": ["12 × 250 € / Monat", "Gesamt (Monate 1–12): 3.000 €", "Provision (5 %): 150 €", "Auszahlung: 2.850 €"],
-            "hint": "Provision wird einmalig auf die addierten ersten 12 Monatszahlungen berechnet — nicht auf jede Einzelrate."
+            "lines": ["4 × 250 € / Monat", "Gesamt (Monate 1–4): 1.000 €", "Provision (5 %): 50 €", "Auszahlung: 950 € *"],
+            "hint": "Provision wird einmalig auf die addierten ersten 4 Monatszahlungen berechnet — nicht auf jede Einzelrate. * Zzgl. Stripe-Zahlungsgebühren (~1,4 % + 0,25 € Kreditkarte · ~0,4 % + 0,25 € SEPA)."
           }
         ],
-        "footnote": "Agency-Plan (3 % Provision): Bei 3.000 € Auftrag → 90 € Provision → Auszahlung 2.910 €",
-        "note": "Zzgl. Stripe-Zahlungsgebühren: ~1,4 % + 0,25 € (Kreditkarte EU) oder ~0,4 % + 0,25 € (SEPA-Lastschrift). Diese werden dir vor Abschluss transparent angezeigt — damit du deinen Preis von Anfang an richtig kalkulieren kannst."
+        "footnote": "Agency-Plan (3 % Provision): Bei 1.000 € Auftrag → 30 € Provision → Auszahlung 970 € *"
       },
       {
         "title": "Die Zahlungsabwicklung",
