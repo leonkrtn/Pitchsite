@@ -813,9 +813,14 @@ export function DemoUpload() {
           <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink leading-tight mb-4 max-w-xl">
             Lad deinen Entwurf hoch. Sieh was dein Kunde sieht.
           </h2>
-          <p className="text-muted text-base leading-relaxed max-w-xl mb-8">
-            HTML, ZIP, Webflow-Export oder Figma-Link — dein Entwurf öffnet sich direkt im Browser.
-            Alles bleibt lokal, nichts wird hochgeladen.
+          <p className="text-muted text-base leading-relaxed max-w-xl mb-3">
+            Das ist eine Live-Vorschau davon, wie dein Kunde deinen Entwurf auf Pitchsite sieht — inklusive Kommentarfunktion und Zahlungsflow. Lad eine eigene Datei hoch um es auszuprobieren: HTML, ZIP, Webflow-Export oder Figma-Link.
+          </p>
+          <p className="text-sm text-muted/70 leading-relaxed max-w-xl mb-8 flex items-start gap-2">
+            <svg className="w-3.5 h-3.5 text-muted/50 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            <span>Alles bleibt lokal in deinem Browser — die Datei wird nicht hochgeladen und ist für niemanden außer dir erreichbar. Kein Link, den Dritte öffnen könnten.</span>
           </p>
 
           {/* Source type tabs */}
