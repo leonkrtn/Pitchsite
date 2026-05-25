@@ -140,7 +140,8 @@
       },
       {
         "title": "The subscription",
-        "body": "The subscription model (Free / Pro / Agency) covers operating costs: servers, storage, email, support. Prices will be announced at launch. Anyone on the waitlist gets the early bird price — guaranteed."
+        "body": "The subscription model (Free / Pro / Agency) covers operating costs: servers, storage, email, support. Prices will be announced at launch. Anyone on the waitlist gets the early bird price — guaranteed.",
+        "note": "A small portion of the subscription fee is secure profit for Pitchsite — regardless of how many deals close in a given month. This is intentional: it keeps the commission low, gives Pitchsite financial predictability, and ensures the product keeps improving even in quieter months."
       }
     ]
   },
