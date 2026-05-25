@@ -250,7 +250,7 @@ function timeAgo(ts: number) {
   return `Vor ${Math.floor(d / 3600000)} Std`
 }
 
-function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, onDelete, onToggleMode, onAccept }: {
+function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, onDelete, onToggleMode, onAccept, collapsed, onToggleCollapse }: {
   comments: Comment[]
   activeId: string | null
   commentMode: boolean
@@ -259,9 +259,10 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
   onDelete: (id: string) => void
   onToggleMode: () => void
   onAccept: () => void
+  collapsed: boolean
+  onToggleCollapse: () => void
 }) {
   const [showResolved, setShowResolved] = useState(false)
-  const [collapsed, setCollapsed] = useState(false)
   const activeRef = useRef<HTMLDivElement>(null)
 
   const open = comments.filter(c => !c.resolved)
@@ -283,7 +284,7 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
     >
       {collapsed ? (
         <div className="flex flex-col items-center pt-3">
-          <button onClick={() => setCollapsed(false)} title="Seitenleiste öffnen"
+          <button onClick={onToggleCollapse} title="Seitenleiste öffnen"
             className="w-6 h-14 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
             <svg className="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -293,7 +294,7 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
       ) : <>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 shrink-0">
-        <button onClick={() => setCollapsed(true)} title="Seitenleiste schließen"
+        <button onClick={onToggleCollapse} title="Seitenleiste schließen"
           className="w-5 h-5 rounded flex items-center justify-center text-muted/40 hover:text-muted hover:bg-gray-200 transition-colors shrink-0 -ml-1">
           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -666,6 +667,7 @@ export function DemoUpload() {
 
   const [showPayment, setShowPayment] = useState(false)
   const [paymentStep, setPaymentStep] = useState<PayStep>('offer')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const [commentMode, setCommentMode] = useState(false)
   const [comments, setComments] = useState<Comment[]>([])
@@ -1010,6 +1012,23 @@ export function DemoUpload() {
                       )}
                     </AnimatePresence>
                   </div>
+
+                  {/* Round sidebar toggle — bottom-left of preview */}
+                  <button
+                    onClick={() => setSidebarCollapsed(c => !c)}
+                    title={sidebarCollapsed ? 'Seitenleiste öffnen' : 'Seitenleiste schließen'}
+                    className="absolute bottom-4 left-4 z-30 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-150"
+                  >
+                    {sidebarCollapsed ? (
+                      <svg className="w-4 h-4 text-ink" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
 
                 {/* Sidebar */}
@@ -1019,6 +1038,8 @@ export function DemoUpload() {
                   onResolve={resolveComment} onDelete={deleteComment}
                   onToggleMode={() => { setCommentMode(m => !m); setPendingPin(null) }}
                   onAccept={() => { setPaymentStep('offer'); setShowPayment(true) }}
+                  collapsed={sidebarCollapsed}
+                  onToggleCollapse={() => setSidebarCollapsed(c => !c)}
                 />
 
                 {/* Payment flow overlay */}
