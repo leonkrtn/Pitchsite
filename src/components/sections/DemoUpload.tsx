@@ -264,6 +264,7 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
 }) {
   const [showResolved, setShowResolved] = useState(false)
   const [feedbackSent, setFeedbackSent] = useState(false)
+  const [sentCommentCount, setSentCommentCount] = useState(0)
   const activeRef = useRef<HTMLDivElement>(null)
 
   const open = comments.filter(c => !c.resolved)
@@ -404,7 +405,7 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
       {/* Footer: mode toggle */}
       <div className="p-3 border-t border-gray-100 shrink-0">
         <AnimatePresence mode="wait">
-          {open.length > 0 && (
+          {open.length > sentCommentCount && (
             feedbackSent ? (
               <motion.div key="sent"
                 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
@@ -419,7 +420,7 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
               <motion.button key="send"
                 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.15 }}
-                onClick={() => { setFeedbackSent(true); setTimeout(() => setFeedbackSent(false), 2500) }}
+                onClick={() => { setFeedbackSent(true); setSentCommentCount(open.length); setTimeout(() => setFeedbackSent(false), 2500) }}
                 className="w-full flex items-center justify-center gap-1.5 text-[11px] text-muted hover:text-ink mb-2.5 py-1 rounded-lg hover:bg-gray-50 transition-colors">
                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.125A59.769 59.769 0 0121.485 12 59.768 59.768 0 013.27 20.875L5.999 12zm0 0h7.5" />
