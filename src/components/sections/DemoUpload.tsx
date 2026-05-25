@@ -278,20 +278,11 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
   return (
     <motion.div
       initial={{ width: 264 }}
-      animate={{ width: collapsed ? 32 : 264 }}
+      animate={{ width: collapsed ? 0 : 264 }}
       transition={{ duration: 0.25, ease: EASE_OUT }}
       className="shrink-0 border-l border-gray-200 bg-white flex flex-col overflow-hidden"
     >
-      {collapsed ? (
-        <div className="flex flex-col items-center pt-3">
-          <button onClick={onToggleCollapse} title="Seitenleiste öffnen"
-            className="w-6 h-14 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors">
-            <svg className="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-            </svg>
-          </button>
-        </div>
-      ) : <>
+      <>
       {/* Header */}
       <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 shrink-0">
         <button onClick={onToggleCollapse} title="Seitenleiste schließen"
@@ -450,7 +441,7 @@ function CommentSidebar({ comments, activeId, commentMode, onSelect, onResolve, 
         </button>
         <p className="text-[9px] text-muted/50 text-center mt-1.5 leading-snug">Demo · So sieht es dein Kunde</p>
       </div>
-      </>}
+      </>
     </motion.div>
   )
 }
