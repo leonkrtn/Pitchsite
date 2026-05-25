@@ -24,7 +24,14 @@ export default async function TransparenzPage({
 }) {
   const { locale } = await params
   const t = await getTranslations({ locale, namespace: 'transparency' })
-  const sections = t.raw('sections') as Array<{ title: string; body: string; note?: string }>
+  type Example = { label: string; lines: string[]; hint?: string }
+  const sections = t.raw('sections') as Array<{
+    title: string
+    body: string
+    note?: string
+    examples?: Example[]
+    footnote?: string
+  }>
 
   return (
     <>
@@ -60,6 +67,30 @@ export default async function TransparenzPage({
                     </p>
                   ))}
                 </div>
+                {section.examples && (
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {section.examples.map((ex, k) => (
+                      <div key={k} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                        <p className="text-[10px] font-bold text-blue-royal uppercase tracking-widest mb-3">{ex.label}</p>
+                        <div className="space-y-1">
+                          {ex.lines.map((line, l) => (
+                            <p key={l} className={`text-sm font-mono leading-relaxed ${line.startsWith('Provision') || line.startsWith('Commission') ? 'text-ink font-semibold' : 'text-muted'}`}>
+                              {line}
+                            </p>
+                          ))}
+                        </div>
+                        {ex.hint && (
+                          <p className="text-[11px] text-muted/70 mt-3 pt-3 border-t border-gray-200 leading-relaxed">
+                            {ex.hint}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {section.footnote && (
+                  <p className="mt-3 text-xs text-muted/60">{section.footnote}</p>
+                )}
                 {section.note && (
                   <div className="mt-5 flex gap-3 bg-blue-50 border border-blue-100 rounded-xl px-5 py-4">
                     <svg className="w-4 h-4 text-blue-royal shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">

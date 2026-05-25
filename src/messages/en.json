@@ -132,7 +132,19 @@
       },
       {
         "title": "Example calculation",
-        "body": "Project: €3,000\nPlan: Pro (5% commission)\nPitchsite commission: €150\nPayout to freelancer: €2,850\n\nProject: €3,000\nPlan: Agency (3% commission)\nPitchsite commission: €90\nPayout to freelancer: €2,910"
+        "body": "Pro plan (5% commission) · Project volume €3,000",
+        "examples": [
+          {
+            "label": "One-time payment",
+            "lines": ["Project: €3,000", "Commission (5%): − €150", "Payout: €2,850"]
+          },
+          {
+            "label": "Monthly payment (subscription)",
+            "lines": ["12 × €250 / month", "Total (months 1–12): €3,000", "Commission (5% on total): − €150", "Payout: €2,850"],
+            "hint": "Commission is calculated once on the combined sum of the first 12 monthly payments — not on each individual installment."
+          }
+        ],
+        "footnote": "Agency plan (3% commission): On a €3,000 project → €90 commission → payout €2,910"
       },
       {
         "title": "Payment processing",

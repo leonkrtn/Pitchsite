@@ -132,7 +132,19 @@
       },
       {
         "title": "Beispielrechnung",
-        "body": "Auftrag: 3.000 €\nPlan: Pro (5% Provision)\nPitchsite-Provision: 150 €\nAuszahlung an den Freelancer: 2.850 €\n\nAuftrag: 3.000 €\nPlan: Agency (3% Provision)\nPitchsite-Provision: 90 €\nAuszahlung an den Freelancer: 2.910 €"
+        "body": "Pro-Plan (5 % Provision) · Projektvolumen 3.000 €",
+        "examples": [
+          {
+            "label": "Einmalzahlung",
+            "lines": ["Auftrag: 3.000 €", "Provision (5 %): − 150 €", "Auszahlung: 2.850 €"]
+          },
+          {
+            "label": "Monatliche Zahlung (Abo)",
+            "lines": ["12 × 250 € / Monat", "Gesamt (Monate 1–12): 3.000 €", "Provision (5 % auf Gesamtbetrag): − 150 €", "Auszahlung: 2.850 €"],
+            "hint": "Provision wird einmalig auf die addierten ersten 12 Monatszahlungen berechnet — nicht auf jede Einzelrate."
+          }
+        ],
+        "footnote": "Agency-Plan (3 % Provision): Bei 3.000 € Auftrag → 90 € Provision → Auszahlung 2.910 €"
       },
       {
         "title": "Die Zahlungsabwicklung",
