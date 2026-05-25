@@ -136,11 +136,11 @@
         "examples": [
           {
             "label": "Einmalzahlung",
-            "lines": ["Auftrag: 3.000 €", "Provision (5 %): − 150 €", "Auszahlung: 2.850 €"]
+            "lines": ["Auftrag: 3.000 €", "Provision (5 %): 150 €", "Auszahlung: 2.850 €"]
           },
           {
             "label": "Monatliche Zahlung (Abo)",
-            "lines": ["12 × 250 € / Monat", "Gesamt (Monate 1–12): 3.000 €", "Provision (5 %): − 150 €", "Auszahlung: 2.850 €"],
+            "lines": ["12 × 250 € / Monat", "Gesamt (Monate 1–12): 3.000 €", "Provision (5 %): 150 €", "Auszahlung: 2.850 €"],
             "hint": "Provision wird einmalig auf die addierten ersten 12 Monatszahlungen berechnet — nicht auf jede Einzelrate."
           }
         ],

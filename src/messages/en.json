@@ -136,11 +136,11 @@
         "examples": [
           {
             "label": "One-time payment",
-            "lines": ["Project: €3,000", "Commission (5%): − €150", "Payout: €2,850"]
+            "lines": ["Project: €3,000", "Commission (5%): €150", "Payout: €2,850"]
           },
           {
             "label": "Monthly payment (subscription)",
-            "lines": ["12 × €250 / month", "Total (months 1–12): €3,000", "Commission (5%): − €150", "Payout: €2,850"],
+            "lines": ["12 × €250 / month", "Total (months 1–12): €3,000", "Commission (5%): €150", "Payout: €2,850"],
             "hint": "Commission is calculated once on the combined sum of the first 12 monthly payments — not on each individual installment."
           }
         ],
