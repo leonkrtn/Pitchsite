@@ -124,7 +124,7 @@
   "transparency": {
     "title": "How does Pitchsite make money?",
     "metaDescription": "A transparent explanation of Pitchsite's business model: commission, subscription prices, and how payment processing works.",
-    "intro": "Pitchsite makes money in exactly one way: a commission on successfully processed deals. No hidden fees, no bloated subscriptions with features locked behind paywalls.",
+    "intro": "Pitchsite has two revenue streams: a commission on successfully processed deals — and a subscription fee that covers the platform's operating costs. Both are disclosed openly here. No hidden fees, no features locked behind paywalls.",
     "sections": [
       {
         "title": "The commission",
@@ -140,7 +140,7 @@
           },
           {
             "label": "Monthly payment (subscription)",
-            "lines": ["12 × €250 / month", "Total (months 1–12): €3,000", "Commission (5% on total): − €150", "Payout: €2,850"],
+            "lines": ["12 × €250 / month", "Total (months 1–12): €3,000", "Commission (5%): − €150", "Payout: €2,850"],
             "hint": "Commission is calculated once on the combined sum of the first 12 monthly payments — not on each individual installment."
           }
         ],

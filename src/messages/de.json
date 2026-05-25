@@ -124,7 +124,7 @@
   "transparency": {
     "title": "Wie verdient Pitchsite Geld?",
     "metaDescription": "Transparente Erklärung des Pitchsite-Geschäftsmodells: Provision, Abo-Preise und wie die Zahlungsabwicklung funktioniert.",
-    "intro": "Pitchsite verdient Geld auf eine einzige Art: eine Provision auf erfolgreich abgewickelte Deals. Kein versteckter Cost, keine aufgeblähten Abo-Preise mit versteckten Features hinter Paywalls.",
+    "intro": "Pitchsite hat zwei Einnahmequellen: eine Provision auf erfolgreich abgewickelte Deals — und eine Abo-Gebühr, die die Betriebskosten der Plattform deckt. Beide werden hier offen ausgewiesen. Keine versteckten Kosten, keine Features hinter Paywalls.",
     "sections": [
       {
         "title": "Die Provision",
@@ -140,7 +140,7 @@
           },
           {
             "label": "Monatliche Zahlung (Abo)",
-            "lines": ["12 × 250 € / Monat", "Gesamt (Monate 1–12): 3.000 €", "Provision (5 % auf Gesamtbetrag): − 150 €", "Auszahlung: 2.850 €"],
+            "lines": ["12 × 250 € / Monat", "Gesamt (Monate 1–12): 3.000 €", "Provision (5 %): − 150 €", "Auszahlung: 2.850 €"],
             "hint": "Provision wird einmalig auf die addierten ersten 12 Monatszahlungen berechnet — nicht auf jede Einzelrate."
           }
         ],
