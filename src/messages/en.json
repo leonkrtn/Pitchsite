@@ -144,7 +144,8 @@
             "hint": "Commission is calculated once on the combined sum of the first 12 monthly payments — not on each individual installment."
           }
         ],
-        "footnote": "Agency plan (3% commission): On a €3,000 project → €90 commission → payout €2,910"
+        "footnote": "Agency plan (3% commission): On a €3,000 project → €90 commission → payout €2,910",
+        "note": "Plus Stripe payment fees: ~1.4% + €0.25 (EU credit card) or ~0.4% + €0.25 (SEPA direct debit). These are shown transparently before checkout — so you can price your projects correctly from the start."
       },
       {
         "title": "Payment processing",

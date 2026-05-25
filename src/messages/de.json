@@ -144,7 +144,8 @@
             "hint": "Provision wird einmalig auf die addierten ersten 12 Monatszahlungen berechnet — nicht auf jede Einzelrate."
           }
         ],
-        "footnote": "Agency-Plan (3 % Provision): Bei 3.000 € Auftrag → 90 € Provision → Auszahlung 2.910 €"
+        "footnote": "Agency-Plan (3 % Provision): Bei 3.000 € Auftrag → 90 € Provision → Auszahlung 2.910 €",
+        "note": "Zzgl. Stripe-Zahlungsgebühren: ~1,4 % + 0,25 € (Kreditkarte EU) oder ~0,4 % + 0,25 € (SEPA-Lastschrift). Diese werden dir vor Abschluss transparent angezeigt — damit du deinen Preis von Anfang an richtig kalkulieren kannst."
       },
       {
         "title": "Die Zahlungsabwicklung",
