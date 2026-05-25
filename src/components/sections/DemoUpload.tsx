@@ -854,242 +854,233 @@ export function DemoUpload() {
           </div>
         </motion.div>
 
-        <AnimatePresence mode="wait">
-          {/* ── Figma input ── */}
-          {sourceType === 'figma' && (phase.kind === 'idle' || phase.kind === 'error') && (
-            <motion.div key="figma-input" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}
-              className="border-2 border-dashed border-gray-200 rounded-2xl p-12 sm:p-16 flex flex-col items-center gap-5">
-              <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
-                <svg className="w-7 h-7 text-gray-400" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/>
-                  <rect x="3" y="13" width="8" height="8" rx="4" fill="currentColor" opacity=".6"/>
-                  <rect x="13" y="3" width="8" height="8" rx="4" fill="currentColor" opacity=".6"/>
-                  <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" opacity=".9"/>
+        {/* ── Browser frame — always visible ── */}
+        <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+
+          {/* Chrome bar */}
+          <div className="bg-gray-100 border-b border-gray-200 px-4 py-2.5 flex items-center gap-3">
+            <div className="flex gap-1.5 shrink-0">
+              <div className="w-3 h-3 rounded-full bg-red-400" />
+              <div className="w-3 h-3 rounded-full bg-yellow-400" />
+              <div className="w-3 h-3 rounded-full bg-green-400" />
+            </div>
+            <div className="flex-1 min-w-0 bg-white rounded-md px-3 py-1 flex items-center gap-2 border border-gray-200">
+              {phase.kind === 'rendering' && <div className="w-3 h-3 border-[1.5px] border-blue-royal border-t-transparent rounded-full animate-spin shrink-0" />}
+              {phase.kind === 'processing' && <div className="w-3 h-3 border-[1.5px] border-blue-royal border-t-transparent rounded-full animate-spin shrink-0" />}
+              <span className="text-xs text-muted font-mono truncate">
+                {(phase.kind === 'rendering' || phase.kind === 'preview') ? phase.filename : 'pitchsite.de/preview/…'}
+              </span>
+            </div>
+            {(phase.kind === 'rendering' || phase.kind === 'preview') && (
+              <button onClick={reset} className="text-xs text-muted hover:text-ink transition-colors flex items-center gap-1 shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </div>
-              <p className="font-semibold text-ink text-lg">Figma Share-Link einfügen</p>
-              <div className="w-full max-w-md flex gap-2">
-                <input
-                  type="url"
-                  value={figmaInput}
-                  onChange={e => setFigmaInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleFigmaSubmit() }}
-                  placeholder="https://www.figma.com/design/…"
-                  className="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-royal/25 focus:border-blue-royal/60 transition-colors"
-                />
-                <button onClick={handleFigmaSubmit}
-                  className="bg-blue-royal text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-colors shrink-0">
-                  Öffnen
-                </button>
-              </div>
-              {phase.kind === 'error' && (
-                <p className="text-sm text-red-600 font-medium">{phase.message}</p>
-              )}
-              <p className="text-xs text-muted/70">Design- und Prototype-Links werden unterstützt</p>
-            </motion.div>
-          )}
+                Schließen
+              </button>
+            )}
+          </div>
 
-          {/* ── Drop zone ── */}
-          {sourceType === 'file' && (phase.kind === 'idle' || phase.kind === 'dragging') && (
-            <motion.div key="drop" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}
-              className={['border-2 border-dashed rounded-2xl p-12 sm:p-20 flex flex-col items-center justify-center cursor-pointer transition-colors duration-200',
-                isDragging ? 'border-blue-royal bg-blue-50' : 'border-gray-200 hover:border-blue-royal/60 bg-surface hover:bg-blue-50/30'].join(' ')}
-              onDragOver={e => { e.preventDefault(); setPhase({ kind: 'dragging' }) }}
-              onDragLeave={() => setPhase({ kind: 'idle' })}
-              onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
-              <input ref={fileInputRef} type="file" accept=".html,.zip" className="sr-only" onChange={onInputChange} />
-              <div className={['w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-200',
-                isDragging ? 'bg-blue-royal/10' : 'bg-gray-100'].join(' ')}>
-                <svg className={['w-7 h-7', isDragging ? 'text-blue-royal' : 'text-gray-400'].join(' ')}
-                  fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                </svg>
-              </div>
-              <p className="font-semibold text-ink text-lg mb-2">{isDragging ? 'Datei loslassen' : 'HTML oder ZIP ablegen'}</p>
-              <p className="text-muted text-sm">oder <span className="text-blue-royal font-medium">Datei auswählen</span></p>
-              <p className="text-muted/50 text-xs mt-3">.html · .zip · Webflow-Export · Bleibt im Browser</p>
-            </motion.div>
-          )}
+          {/* Content area */}
+          <AnimatePresence mode="wait">
 
-          {/* ── Processing ── */}
-          {phase.kind === 'processing' && (
-            <motion.div key="proc" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }} transition={{ duration: 0.25 }}
-              className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-              <div className="bg-gray-100 border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-                <div className="flex gap-1.5 shrink-0">
-                  <div className="w-3 h-3 rounded-full bg-red-400" /><div className="w-3 h-3 rounded-full bg-yellow-400" /><div className="w-3 h-3 rounded-full bg-green-400" />
-                </div>
-                <div className="flex-1 bg-white rounded-md px-3 py-1.5 flex items-center gap-2 border border-gray-200">
-                  <div className="w-3 h-3 border-[1.5px] border-blue-royal border-t-transparent rounded-full animate-spin shrink-0" />
-                  <Shimmer className="w-40 h-2.5" />
-                </div>
-              </div>
-              <div className="h-[540px]"><BrowserSkeleton /></div>
-            </motion.div>
-          )}
-
-          {/* ── Browser + Comments ── */}
-          {(phase.kind === 'rendering' || phase.kind === 'preview') && (
-            <motion.div key="browser" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: EASE_OUT }}
-              className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-
-              {/* Chrome bar */}
-              <div className="bg-gray-100 border-b border-gray-200 px-4 py-2.5 flex items-center gap-3">
-                <div className="flex gap-1.5 shrink-0">
-                  <div className="w-3 h-3 rounded-full bg-red-400" /><div className="w-3 h-3 rounded-full bg-yellow-400" /><div className="w-3 h-3 rounded-full bg-green-400" />
-                </div>
-                <div className="flex-1 min-w-0 bg-white rounded-md px-3 py-1 flex items-center gap-2 border border-gray-200">
-                  {phase.kind === 'rendering' && <div className="w-3 h-3 border-[1.5px] border-blue-royal border-t-transparent rounded-full animate-spin shrink-0" />}
-                  <span className="text-xs text-muted font-mono truncate">{phase.filename}</span>
-                </div>
-                <button onClick={reset} className="text-xs text-muted hover:text-ink transition-colors flex items-center gap-1 shrink-0">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            {/* ── Figma input ── */}
+            {sourceType === 'figma' && (phase.kind === 'idle' || phase.kind === 'error') && (
+              <motion.div key="figma-input" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}
+                className="p-12 sm:p-16 flex flex-col items-center gap-5 min-h-[540px] justify-center bg-surface">
+                <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-gray-400" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor" opacity=".3"/>
+                    <rect x="3" y="13" width="8" height="8" rx="4" fill="currentColor" opacity=".6"/>
+                    <rect x="13" y="3" width="8" height="8" rx="4" fill="currentColor" opacity=".6"/>
+                    <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" opacity=".9"/>
                   </svg>
-                  Schließen
-                </button>
-              </div>
+                </div>
+                <p className="font-semibold text-ink text-lg">Figma Share-Link einfügen</p>
+                <div className="w-full max-w-md flex gap-2">
+                  <input
+                    type="url"
+                    value={figmaInput}
+                    onChange={e => setFigmaInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleFigmaSubmit() }}
+                    placeholder="https://www.figma.com/design/…"
+                    className="flex-1 text-sm border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-royal/25 focus:border-blue-royal/60 transition-colors"
+                  />
+                  <button onClick={handleFigmaSubmit}
+                    className="bg-blue-royal text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-blue-700 transition-colors shrink-0">
+                    Öffnen
+                  </button>
+                </div>
+                {phase.kind === 'error' && (
+                  <p className="text-sm text-red-600 font-medium">{phase.message}</p>
+                )}
+                <p className="text-xs text-muted/70">Design- und Prototype-Links werden unterstützt</p>
+              </motion.div>
+            )}
 
-              {/* Content row */}
-              <div className="relative flex h-[580px]">
-                {/* Preview + overlay */}
-                <div className={['relative flex-1 min-w-0 overflow-hidden transition-shadow duration-200',
-                  commentMode ? 'ring-2 ring-inset ring-blue-royal/20' : ''].join(' ')}>
+            {/* ── Drop zone ── */}
+            {sourceType === 'file' && (phase.kind === 'idle' || phase.kind === 'dragging') && (
+              <motion.div key="drop" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.3, ease: EASE_OUT }}
+                className={['min-h-[540px] flex flex-col items-center justify-center cursor-pointer transition-colors duration-200 px-12',
+                  isDragging ? 'bg-blue-50' : 'bg-surface hover:bg-blue-50/30'].join(' ')}
+                onDragOver={e => { e.preventDefault(); setPhase({ kind: 'dragging' }) }}
+                onDragLeave={() => setPhase({ kind: 'idle' })}
+                onDrop={onDrop} onClick={() => fileInputRef.current?.click()}>
+                <input ref={fileInputRef} type="file" accept=".html,.zip" className="sr-only" onChange={onInputChange} />
+                <div className={['w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-colors duration-200',
+                  isDragging ? 'bg-blue-royal/10' : 'bg-gray-100'].join(' ')}>
+                  <svg className={['w-7 h-7', isDragging ? 'text-blue-royal' : 'text-gray-400'].join(' ')}
+                    fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-ink text-lg mb-2">{isDragging ? 'Datei loslassen' : 'HTML oder ZIP ablegen'}</p>
+                <p className="text-muted text-sm">oder <span className="text-blue-royal font-medium">Datei auswählen</span></p>
+                <p className="text-muted/50 text-xs mt-3">.html · .zip · Webflow-Export · Bleibt im Browser</p>
+              </motion.div>
+            )}
 
-                  {/* Skeleton overlay while iframe loads */}
-                  <AnimatePresence>
-                    {phase.kind === 'rendering' && (
-                      <motion.div key="sk" initial={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3 }} className="absolute inset-0 z-10">
-                        <BrowserSkeleton />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+            {/* ── Processing ── */}
+            {phase.kind === 'processing' && (
+              <motion.div key="proc" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+                <div className="h-[540px]"><BrowserSkeleton /></div>
+              </motion.div>
+            )}
 
-                  <iframe ref={iframeRef} src={phase.src} className="w-full h-full border-0 block"
-                    sandbox={sourceType === 'figma'
-                      ? 'allow-scripts allow-same-origin allow-forms allow-popups'
-                      : 'allow-scripts allow-same-origin allow-forms'}
-                    title="Entwurfs-Vorschau" onLoad={onIframeLoad} />
+            {/* ── Browser + Comments ── */}
+            {(phase.kind === 'rendering' || phase.kind === 'preview') && (
+              <motion.div key="browser" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }} transition={{ duration: 0.4, ease: EASE_OUT }}>
 
-                  {/* Annotation overlay */}
-                  <div
-                    className={['absolute inset-0 z-20', commentMode ? 'cursor-crosshair' : 'pointer-events-none'].join(' ')}
-                    onClick={handleOverlayClick}
-                  >
-                    {/* Comment mode hint */}
+                {/* Content row */}
+                <div className="relative flex h-[580px]">
+                  {/* Preview + overlay */}
+                  <div className={['relative flex-1 min-w-0 overflow-hidden transition-shadow duration-200',
+                    commentMode ? 'ring-2 ring-inset ring-blue-royal/20' : ''].join(' ')}>
+
+                    {/* Skeleton overlay while iframe loads */}
                     <AnimatePresence>
-                      {commentMode && !pendingPin && comments.length === 0 && (
-                        <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                          className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-[11px] font-medium px-3 py-1.5 rounded-full pointer-events-none backdrop-blur-sm">
-                          Klick auf beliebige Stelle
+                      {phase.kind === 'rendering' && (
+                        <motion.div key="sk" initial={{ opacity: 1 }} exit={{ opacity: 0 }}
+                          transition={{ duration: 0.3 }} className="absolute inset-0 z-10">
+                          <BrowserSkeleton />
                         </motion.div>
                       )}
                     </AnimatePresence>
 
-                    {/* Existing pins — positioned via direct DOM writes for zero-lag scroll tracking */}
-                    <AnimatePresence>
-                      {comments.map((c, i) => (
-                        <CommentPin key={c.id} number={i + 1}
-                          resolved={c.resolved} active={activeId === c.id}
-                          onClick={() => setActiveId(a => a === c.id ? null : c.id)}
-                          divRef={(el) => {
-                            if (el) {
-                              pinRefs.current.set(c.id, el)
-                              const iw = iframeRef.current?.offsetWidth ?? 760
-                              const ih = iframeRef.current?.offsetHeight ?? 580
-                              const { x: scrollX, y: scrollY } = iframeScrollRef.current
-                              const vx = (c.absX - scrollX) / iw * 100
-                              const vy = (c.absY - scrollY) / ih * 100
-                              el.style.left = `${vx}%`
-                              el.style.top = `${vy}%`
-                              el.style.visibility = vx > -2 && vx < 102 && vy > 0 && vy < 101 ? 'visible' : 'hidden'
-                            } else {
-                              pinRefs.current.delete(c.id)
-                            }
-                          }}
-                        />
-                      ))}
-                    </AnimatePresence>
+                    <iframe ref={iframeRef} src={phase.src} className="w-full h-full border-0 block"
+                      sandbox={sourceType === 'figma'
+                        ? 'allow-scripts allow-same-origin allow-forms allow-popups'
+                        : 'allow-scripts allow-same-origin allow-forms'}
+                      title="Entwurfs-Vorschau" onLoad={onIframeLoad} />
 
-                    {/* Pending pin + input (uses viewport coords from click time) */}
-                    <AnimatePresence>
-                      {pendingPin && (
-                        <>
-                          <motion.div key="pending-ring" initial={{ scale: 0 }} animate={{ scale: 1 }}
-                            className="absolute z-20 w-6 h-6 rounded-full rounded-bl-none"
-                            style={{ left: `${pendingPin.viewX}%`, top: `${pendingPin.viewY}%`, transform: 'translateY(-100%)' }}>
-                            <div className="w-full h-full rounded-full rounded-bl-none border-2 border-blue-royal bg-blue-royal/20 flex items-center justify-center text-[9px] font-bold text-blue-royal">
-                              {comments.length + 1}
-                            </div>
-                            <div className="absolute inset-0 rounded-full rounded-bl-none border-2 border-blue-royal animate-ping opacity-50" />
+                    {/* Annotation overlay */}
+                    <div
+                      className={['absolute inset-0 z-20', commentMode ? 'cursor-crosshair' : 'pointer-events-none'].join(' ')}
+                      onClick={handleOverlayClick}
+                    >
+                      <AnimatePresence>
+                        {commentMode && !pendingPin && comments.length === 0 && (
+                          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-[11px] font-medium px-3 py-1.5 rounded-full pointer-events-none backdrop-blur-sm">
+                            Klick auf beliebige Stelle
                           </motion.div>
+                        )}
+                      </AnimatePresence>
 
-                          <NewCommentCard key="pending-card" x={pendingPin.viewX} y={pendingPin.viewY}
-                            index={comments.length + 1} onSubmit={addComment}
-                            onCancel={() => setPendingPin(null)} />
-                        </>
+                      <AnimatePresence>
+                        {comments.map((c, i) => (
+                          <CommentPin key={c.id} number={i + 1}
+                            resolved={c.resolved} active={activeId === c.id}
+                            onClick={() => setActiveId(a => a === c.id ? null : c.id)}
+                            divRef={(el) => {
+                              if (el) {
+                                pinRefs.current.set(c.id, el)
+                                const iw = iframeRef.current?.offsetWidth ?? 760
+                                const ih = iframeRef.current?.offsetHeight ?? 580
+                                const { x: scrollX, y: scrollY } = iframeScrollRef.current
+                                const vx = (c.absX - scrollX) / iw * 100
+                                const vy = (c.absY - scrollY) / ih * 100
+                                el.style.left = `${vx}%`
+                                el.style.top = `${vy}%`
+                                el.style.visibility = vx > -2 && vx < 102 && vy > 0 && vy < 101 ? 'visible' : 'hidden'
+                              } else {
+                                pinRefs.current.delete(c.id)
+                              }
+                            }}
+                          />
+                        ))}
+                      </AnimatePresence>
+
+                      <AnimatePresence>
+                        {pendingPin && (
+                          <>
+                            <motion.div key="pending-ring" initial={{ scale: 0 }} animate={{ scale: 1 }}
+                              className="absolute z-20 w-6 h-6 rounded-full rounded-bl-none"
+                              style={{ left: `${pendingPin.viewX}%`, top: `${pendingPin.viewY}%`, transform: 'translateY(-100%)' }}>
+                              <div className="w-full h-full rounded-full rounded-bl-none border-2 border-blue-royal bg-blue-royal/20 flex items-center justify-center text-[9px] font-bold text-blue-royal">
+                                {comments.length + 1}
+                              </div>
+                              <div className="absolute inset-0 rounded-full rounded-bl-none border-2 border-blue-royal animate-ping opacity-50" />
+                            </motion.div>
+                            <NewCommentCard key="pending-card" x={pendingPin.viewX} y={pendingPin.viewY}
+                              index={comments.length + 1} onSubmit={addComment}
+                              onCancel={() => setPendingPin(null)} />
+                          </>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <AnimatePresence>
+                      {sidebarCollapsed && (
+                        <motion.button key="sidebar-toggle"
+                          initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.7 }} transition={{ duration: 0.18, ease: EASE_OUT }}
+                          onClick={() => setSidebarCollapsed(false)} title="Seitenleiste öffnen"
+                          className="absolute bottom-4 right-4 z-30 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95 transition-shadow duration-150">
+                          <svg className="w-4 h-4 text-ink" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
+                          </svg>
+                        </motion.button>
                       )}
                     </AnimatePresence>
                   </div>
 
-                  {/* Round sidebar toggle — bottom-right, only visible when sidebar is closed */}
+                  <CommentSidebar
+                    comments={comments} activeId={activeId} commentMode={commentMode}
+                    onSelect={id => setActiveId(a => a === id ? null : id)}
+                    onResolve={resolveComment} onDelete={deleteComment}
+                    onToggleMode={() => { setCommentMode(m => !m); setPendingPin(null) }}
+                    onAccept={() => { setPaymentStep('offer'); setShowPayment(true) }}
+                    collapsed={sidebarCollapsed}
+                    onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+                  />
+
                   <AnimatePresence>
-                    {sidebarCollapsed && (
-                      <motion.button
-                        key="sidebar-toggle"
-                        initial={{ opacity: 0, scale: 0.7 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.7 }}
-                        transition={{ duration: 0.18, ease: EASE_OUT }}
-                        onClick={() => setSidebarCollapsed(false)}
-                        title="Seitenleiste öffnen"
-                        className="absolute bottom-4 right-4 z-30 w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center hover:shadow-lg hover:scale-105 active:scale-95 transition-shadow duration-150"
-                      >
-                        <svg className="w-4 h-4 text-ink" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z" />
-                        </svg>
-                      </motion.button>
+                    {showPayment && (
+                      <PaymentFlow step={paymentStep} onStep={setPaymentStep}
+                        onClose={() => { setShowPayment(false); setPaymentStep('offer') }} />
                     )}
                   </AnimatePresence>
                 </div>
+              </motion.div>
+            )}
 
-                {/* Sidebar */}
-                <CommentSidebar
-                  comments={comments} activeId={activeId} commentMode={commentMode}
-                  onSelect={id => setActiveId(a => a === id ? null : id)}
-                  onResolve={resolveComment} onDelete={deleteComment}
-                  onToggleMode={() => { setCommentMode(m => !m); setPendingPin(null) }}
-                  onAccept={() => { setPaymentStep('offer'); setShowPayment(true) }}
-                  collapsed={sidebarCollapsed}
-                  onToggleCollapse={() => setSidebarCollapsed(c => !c)}
-                />
+            {/* ── Error ── */}
+            {phase.kind === 'error' && sourceType === 'file' && (
+              <motion.div key="err" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }}
+                className="p-12 flex flex-col items-center gap-4 min-h-[540px] justify-center bg-red-50">
+                <p className="text-red-700 font-medium text-center">{phase.message}</p>
+                <button onClick={reset} className="text-sm text-blue-royal font-semibold hover:underline">Nochmal versuchen</button>
+              </motion.div>
+            )}
 
-                {/* Payment flow overlay */}
-                <AnimatePresence>
-                  {showPayment && (
-                    <PaymentFlow step={paymentStep} onStep={setPaymentStep}
-                      onClose={() => { setShowPayment(false); setPaymentStep('offer') }} />
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── Error (file mode only — figma errors show inline) ── */}
-          {phase.kind === 'error' && sourceType === 'file' && (
-            <motion.div key="err" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }} transition={{ duration: 0.3, ease: EASE_OUT }}
-              className="border-2 border-red-200 rounded-2xl p-12 flex flex-col items-center gap-4 bg-red-50">
-              <p className="text-red-700 font-medium text-center">{phase.message}</p>
-              <button onClick={reset} className="text-sm text-blue-royal font-semibold hover:underline">Nochmal versuchen</button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          </AnimatePresence>
+        </div>
       </div>
     </section>
   )
