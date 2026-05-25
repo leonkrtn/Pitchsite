@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
+import { SparkleText } from '@/components/ui/SparkleText'
 
 export function Navigation() {
   const t = useTranslations('nav')
@@ -24,7 +25,7 @@ export function Navigation() {
     >
       <div className="max-w-5xl mx-auto h-14 flex items-center justify-between">
         <span className="font-display font-bold text-base tracking-tight">
-          <span className="text-ink">Pitch</span><span className="text-blue-royal">site</span>
+          <span className="text-ink">Pitch</span><SparkleText>site</SparkleText>
         </span>
 
         <div className="flex items-center gap-6">

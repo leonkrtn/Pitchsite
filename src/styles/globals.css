@@ -26,6 +26,16 @@ html {
   to { transform: translateX(200%); }
 }
 
+@keyframes sparkle-sweep {
+  0% { background-position: -250% center; }
+  100% { background-position: 250% center; }
+}
+
+@keyframes sparkle-pop {
+  0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1) rotate(15deg); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
