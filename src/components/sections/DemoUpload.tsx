@@ -679,7 +679,10 @@ export function DemoUpload() {
                   </AnimatePresence>
 
                   <iframe ref={iframeRef} src={phase.src} className="w-full h-full border-0 block"
-                    sandbox="allow-scripts allow-same-origin allow-forms" title="Entwurfs-Vorschau" onLoad={onIframeLoad} />
+                    sandbox={sourceType === 'figma'
+                      ? 'allow-scripts allow-same-origin allow-forms allow-popups'
+                      : 'allow-scripts allow-same-origin allow-forms'}
+                    title="Entwurfs-Vorschau" onLoad={onIframeLoad} />
 
                   {/* Annotation overlay */}
                   <div
