@@ -1,35 +1,42 @@
 'use client'
 
-import { useState } from 'react'
 import { useLocale } from 'next-intl'
 import { useRouter, usePathname } from '@/i18n/navigation'
 
-export function LanguageToggle() {
+export function LanguageToggle({ dark = false }: { dark?: boolean }) {
   const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
-  const [hov, setHov] = useState(false)
 
-  const toggle = () => {
-    router.replace(pathname, { locale: locale === 'de' ? 'en' : 'de' })
+  const switchTo = (lang: string) => {
+    if (lang !== locale) router.replace(pathname, { locale: lang as 'de' | 'en' })
   }
 
+  const col = dark ? 'rgba(255,255,255,0.6)' : '#64748B'
+  const active = dark ? '#fff' : '#0F172A'
+
   return (
-    <button
-      onClick={toggle}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      aria-label="Switch language"
-      style={{
-        fontSize: '14px', fontWeight: 500,
-        color: hov ? '#0F172A' : '#64748B',
-        background: 'none', border: 'none', cursor: 'pointer',
-        fontVariantNumeric: 'tabular-nums',
-        transition: 'color 150ms ease',
-        fontFamily: 'Inter, system-ui, sans-serif',
-      }}
-    >
-      {locale === 'de' ? 'EN' : 'DE'}
-    </button>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      {(['de', 'en'] as const).map((l, i) => (
+        <span key={l} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {i > 0 && (
+            <span style={{ color: dark ? 'rgba(255,255,255,0.3)' : '#E2E8F0', fontSize: '14px', lineHeight: 1 }}>|</span>
+          )}
+          <button
+            onClick={() => switchTo(l)}
+            aria-label={`Switch to ${l.toUpperCase()}`}
+            style={{
+              background: 'none', border: 'none', cursor: locale === l ? 'default' : 'pointer',
+              fontSize: '13px', fontWeight: locale === l ? 600 : 400,
+              fontFamily: 'Inter, sans-serif',
+              color: locale === l ? active : col,
+              padding: '2px 0', transition: 'color 150ms',
+            }}
+          >
+            {l.toUpperCase()}
+          </button>
+        </span>
+      ))}
+    </div>
   )
 }

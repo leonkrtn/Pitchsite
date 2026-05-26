@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Bell, User, Settings, LogOut, Check } from 'lucide-react'
 import { Button } from './ds'
 import { createBrowserClient } from '@/lib/supabase'
+import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 // ── LOGO ──────────────────────────────────────────────────
 
@@ -66,6 +67,7 @@ export function NavbarDashboard({ locale, userName, userInitials = 'PS' }: Navba
       <AppLogo href={`/${locale}/app/dashboard`} />
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
+        <LanguageToggle />
         <div style={{ position: 'relative', marginLeft: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
           <Bell size={20} color="#64748B" />
           <span style={{
@@ -149,6 +151,7 @@ export function NavbarMarketing({ locale }: { locale: string }) {
     }}>
       <AppLogo href={`/${locale}/app/pitch`} />
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <LanguageToggle />
         <Button variant="secondary" size="sm" onClick={() => router.push(`/${locale}/app/login`)} style={{ marginLeft: '8px' }}>
           {locale === 'en' ? 'Sign in' : 'Anmelden'}
         </Button>
