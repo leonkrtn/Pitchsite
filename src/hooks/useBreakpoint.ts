@@ -5,11 +5,10 @@ import { useState, useEffect } from 'react'
 const BREAKPOINTS = { sm: 640, md: 768, lg: 1024, xl: 1280 }
 
 export function useBreakpoint() {
-  const [width, setWidth] = useState<number>(
-    typeof window !== 'undefined' ? window.innerWidth : 1280
-  )
+  const [width, setWidth] = useState<number>(1280)
 
   useEffect(() => {
+    setWidth(window.innerWidth)
     let raf: number
     const onResize = () => {
       cancelAnimationFrame(raf)
