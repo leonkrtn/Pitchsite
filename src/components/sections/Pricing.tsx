@@ -1,7 +1,11 @@
+'use client'
+
 import { useTranslations } from 'next-intl'
 import { useLocale } from 'next-intl'
+import { useState } from 'react'
 import { ScrollReveal } from '@/components/ui/ScrollReveal'
 import { Link } from '@/i18n/navigation'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 interface Plan {
   name: string
@@ -14,7 +18,7 @@ interface Plan {
 
 function CheckIcon() {
   return (
-    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '16px', height: '16px', flexShrink: 0 }} aria-hidden="true">
       <circle cx="8" cy="8" r="7" stroke="#1D4ED8" strokeWidth="1.2" />
       <path d="M5 8l2 2 4-4" stroke="#1D4ED8" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -23,7 +27,7 @@ function CheckIcon() {
 
 function DashIcon() {
   return (
-    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 shrink-0" aria-hidden="true">
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '16px', height: '16px', flexShrink: 0 }} aria-hidden="true">
       <circle cx="8" cy="8" r="7" stroke="#CBD5E1" strokeWidth="1.2" />
       <path d="M5.5 8h5" stroke="#CBD5E1" strokeWidth="1.4" strokeLinecap="round" />
     </svg>
@@ -32,65 +36,64 @@ function DashIcon() {
 
 function PlanCard({ plan, highlighted }: { plan: Plan; highlighted?: boolean }) {
   return (
-    <div
-      className={`relative rounded-2xl p-8 flex flex-col gap-6 ${
-        highlighted
-          ? 'bg-blue-royal text-white ring-2 ring-blue-royal'
-          : 'bg-white border border-gray-200'
-      }`}
-    >
+    <div style={{
+      position: 'relative', borderRadius: '16px', padding: '32px',
+      display: 'flex', flexDirection: 'column', gap: '24px',
+      background: highlighted ? '#1D4ED8' : '#fff',
+      border: highlighted ? '2px solid #1D4ED8' : '1px solid #E5E7EB',
+    }}>
       <div>
-        <div className="flex items-start justify-between mb-1">
-          <p className={`font-display font-bold text-xl ${highlighted ? 'text-white' : 'text-ink'}`}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '4px' }}>
+          <p style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', fontWeight: 700, fontSize: '20px', color: highlighted ? '#fff' : '#0F172A' }}>
             {plan.name}
           </p>
           {plan.badge && (
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                highlighted ? 'bg-white/20 text-white' : 'bg-blue-light text-blue-royal'
-              }`}
-            >
+            <span style={{
+              fontSize: '12px', fontWeight: 600, padding: '4px 10px', borderRadius: '9999px',
+              background: highlighted ? 'rgba(255,255,255,0.2)' : '#EFF6FF',
+              color: highlighted ? '#fff' : '#1D4ED8',
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}>
               {plan.badge}
             </span>
           )}
         </div>
-        <p className={`text-sm ${highlighted ? 'text-white/70' : 'text-muted'}`}>
+        <p style={{ fontSize: '14px', color: highlighted ? 'rgba(255,255,255,0.7)' : '#64748B', fontFamily: 'Inter, system-ui, sans-serif' }}>
           {plan.description}
         </p>
       </div>
 
       <div>
         {plan.price ? (
-          <div className="flex items-baseline gap-1">
-            <span className={`font-display font-bold text-4xl ${highlighted ? 'text-white' : 'text-ink'}`}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+            <span style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', fontWeight: 700, fontSize: '36px', color: highlighted ? '#fff' : '#0F172A' }}>
               {plan.price}
             </span>
             {plan.period && (
-              <span className={`text-sm ${highlighted ? 'text-white/60' : 'text-muted'}`}>
+              <span style={{ fontSize: '14px', color: highlighted ? 'rgba(255,255,255,0.6)' : '#64748B', fontFamily: 'Inter, system-ui, sans-serif' }}>
                 {plan.period}
               </span>
             )}
           </div>
         ) : (
-          <div className={`h-[52px] flex items-center text-sm font-medium ${highlighted ? 'text-white/60' : 'text-muted'}`}>
+          <div style={{ height: '52px', display: 'flex', alignItems: 'center', fontSize: '14px', fontWeight: 500, color: highlighted ? 'rgba(255,255,255,0.6)' : '#64748B', fontFamily: 'Inter, system-ui, sans-serif' }}>
             —
           </div>
         )}
       </div>
 
-      <ul className="space-y-3 flex-1">
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
         {plan.features.map((feature, i) => {
           const isDash = feature.startsWith('—')
           return (
-            <li key={i} className="flex items-start gap-2.5">
+            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
               {isDash ? <DashIcon /> : <CheckIcon />}
-              <span
-                className={`text-sm leading-snug ${
-                  isDash
-                    ? highlighted ? 'text-white/40' : 'text-muted/50'
-                    : highlighted ? 'text-white/90' : 'text-muted'
-                }`}
-              >
+              <span style={{
+                fontSize: '14px', lineHeight: 1.375, fontFamily: 'Inter, system-ui, sans-serif',
+                color: isDash
+                  ? (highlighted ? 'rgba(255,255,255,0.4)' : 'rgba(100,116,139,0.5)')
+                  : (highlighted ? 'rgba(255,255,255,0.9)' : '#64748B'),
+              }}>
                 {isDash ? feature.slice(2) : feature}
               </span>
             </li>
@@ -105,22 +108,26 @@ export function Pricing() {
   const t = useTranslations('pricing')
   const locale = useLocale()
   const plans = t.raw('plans') as Plan[]
+  const { isMobile, isTablet } = useBreakpoint()
+  const [linkHov, setLinkHov] = useState(false)
 
   return (
-    <section className="py-24 sm:py-32 px-6 sm:px-8">
-      <div className="max-w-5xl mx-auto">
+    <section style={{ padding: '96px 24px' }}>
+      <div style={{ maxWidth: '1024px', margin: '0 auto' }}>
         <ScrollReveal>
-          <span className="text-xs font-semibold uppercase tracking-widest text-blue-royal mb-4 block">
+          <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#1D4ED8', marginBottom: '16px', display: 'block', fontFamily: 'Inter, system-ui, sans-serif' }}>
             {t('label')}
           </span>
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink leading-tight mb-3 max-w-xl">
+          <h2 style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 36px)', color: '#0F172A', lineHeight: 1.25, marginBottom: '12px', maxWidth: '576px' }}>
             {t('headline')}
           </h2>
-          <p className="text-muted mb-12 max-w-xl leading-relaxed">{t('subline')}</p>
+          <p style={{ color: '#64748B', marginBottom: '48px', maxWidth: '576px', lineHeight: 1.625, fontFamily: 'Inter, system-ui, sans-serif' }}>
+            {t('subline')}
+          </p>
         </ScrollReveal>
 
         <ScrollReveal delay={0.1}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr 1fr', gap: '16px', marginBottom: '32px' }}>
             {plans.map((plan, i) => (
               <PlanCard key={plan.name} plan={plan} highlighted={i === 1} />
             ))}
@@ -128,22 +135,29 @@ export function Pricing() {
         </ScrollReveal>
 
         <ScrollReveal delay={0.2}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-gray-100">
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', paddingTop: '24px', borderTop: '1px solid #F1F5F9' }}>
             <div>
-              <p className="text-sm text-muted">{t('provisionNote')}</p>
-              <p className="text-xs text-muted/70 mt-1">{t('stripeNote')}</p>
+              <p style={{ fontSize: '14px', color: '#64748B', fontFamily: 'Inter, system-ui, sans-serif' }}>{t('provisionNote')}</p>
+              <p style={{ fontSize: '12px', color: 'rgba(100,116,139,0.7)', marginTop: '4px', fontFamily: 'Inter, system-ui, sans-serif' }}>{t('stripeNote')}</p>
             </div>
-            <p className="text-sm font-semibold text-ink shrink-0">{t('earlybird')}</p>
+            <p style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', flexShrink: 0, fontFamily: 'Inter, system-ui, sans-serif' }}>{t('earlybird')}</p>
           </div>
 
-          <div className="mt-6">
+          <div style={{ marginTop: '24px' }}>
             <Link
               href="/transparenz"
               locale={locale as 'de' | 'en'}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-royal hover:underline"
+              onMouseEnter={() => setLinkHov(true)}
+              onMouseLeave={() => setLinkHov(false)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                fontSize: '14px', fontWeight: 500, color: '#1D4ED8',
+                textDecoration: linkHov ? 'underline' : 'none',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}
             >
               {t('transparency')}
-              <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" style={{ width: '16px', height: '16px' }} aria-hidden="true">
                 <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>

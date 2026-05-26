@@ -12,31 +12,26 @@ export function WaitlistForm() {
   const [consent, setConsent] = useState(false)
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [focusedField, setFocusedField] = useState<string | null>(null)
+  const [btnHov, setBtnHov] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!consent) return
-
     setStatus('loading')
     setErrorMessage('')
-
     try {
       const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, locale }),
       })
-
       const data = await res.json()
-
       if (!res.ok) {
-        setErrorMessage(
-          data.code === 'EXISTS' ? t('errorExists') : t('errorGeneric')
-        )
+        setErrorMessage(data.code === 'EXISTS' ? t('errorExists') : t('errorGeneric'))
         setStatus('error')
         return
       }
-
       setStatus('success')
     } catch {
       setErrorMessage(t('errorGeneric'))
@@ -44,8 +39,18 @@ export function WaitlistForm() {
     }
   }
 
+  const inputStyle = (field: string): React.CSSProperties => ({
+    width: '100%', padding: '12px 16px', borderRadius: '12px',
+    border: `1px solid ${focusedField === field ? '#1D4ED8' : '#E5E7EB'}`,
+    outline: 'none', fontSize: '14px',
+    color: '#0F172A', background: '#fff',
+    boxShadow: focusedField === field ? '0 0 0 3px rgba(29,78,216,0.1)' : 'none',
+    transition: 'border-color 150ms ease, box-shadow 150ms ease',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  })
+
   return (
-    <div className="w-full max-w-md">
+    <div style={{ width: '100%', maxWidth: '448px' }}>
       <AnimatePresence mode="wait">
         {status === 'success' ? (
           <motion.div
@@ -53,10 +58,14 @@ export function WaitlistForm() {
             initial={{ opacity: 0, filter: 'blur(4px)' }}
             animate={{ opacity: 1, filter: 'blur(0px)' }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="py-8"
+            style={{ padding: '32px 0' }}
           >
-            <p className="font-display font-bold text-2xl text-ink mb-2">{t('success')}</p>
-            <p className="text-muted leading-relaxed">{t('successSub')}</p>
+            <p style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', fontWeight: 700, fontSize: '24px', color: '#0F172A', marginBottom: '8px' }}>
+              {t('success')}
+            </p>
+            <p style={{ color: '#64748B', lineHeight: 1.625, fontFamily: 'Inter, system-ui, sans-serif' }}>
+              {t('successSub')}
+            </p>
           </motion.div>
         ) : (
           <motion.form
@@ -65,47 +74,58 @@ export function WaitlistForm() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(4px)' }}
             transition={{ duration: 0.2 }}
-            className="flex flex-col gap-3"
+            style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
           >
             <input
-              type="text"
-              required
-              minLength={2}
+              type="text" required minLength={2}
               placeholder={t('namePlaceholder')}
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-ink placeholder:text-muted/60 text-sm focus:outline-none focus:border-blue-royal focus:ring-2 focus:ring-blue-royal/10 transition-all duration-150"
+              onChange={e => setName(e.target.value)}
+              onFocus={() => setFocusedField('name')}
+              onBlur={() => setFocusedField(null)}
+              style={inputStyle('name')}
             />
             <input
-              type="email"
-              required
+              type="email" required
               placeholder={t('emailPlaceholder')}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-ink placeholder:text-muted/60 text-sm focus:outline-none focus:border-blue-royal focus:ring-2 focus:ring-blue-royal/10 transition-all duration-150"
+              onChange={e => setEmail(e.target.value)}
+              onFocus={() => setFocusedField('email')}
+              onBlur={() => setFocusedField(null)}
+              style={inputStyle('email')}
             />
-            <label className="flex items-start gap-3 cursor-pointer group">
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
               <input
-                type="checkbox"
-                required
+                type="checkbox" required
                 checked={consent}
-                onChange={(e) => setConsent(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-royal focus:ring-blue-royal/20 cursor-pointer shrink-0"
+                onChange={e => setConsent(e.target.checked)}
+                style={{ marginTop: '2px', width: '16px', height: '16px', flexShrink: 0, cursor: 'pointer', accentColor: '#1D4ED8' }}
               />
-              <span className="text-xs text-muted leading-relaxed group-hover:text-ink/70 transition-colors">
+              <span style={{ fontSize: '12px', color: '#64748B', lineHeight: 1.625, fontFamily: 'Inter, system-ui, sans-serif' }}>
                 {t('consent')}
               </span>
             </label>
 
             {status === 'error' && (
-              <p className="text-sm text-red-600">{errorMessage}</p>
+              <p style={{ fontSize: '14px', color: '#DC2626', fontFamily: 'Inter, system-ui, sans-serif' }}>
+                {errorMessage}
+              </p>
             )}
 
             <button
               type="submit"
               disabled={status === 'loading' || !consent}
-              className="w-full bg-blue-royal text-white font-semibold py-3.5 px-6 rounded-xl text-sm transition-all duration-150 ease-out disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
-              style={{ transition: 'transform 160ms ease-out, opacity 150ms ease-out, background-color 150ms ease-out' }}
+              onMouseEnter={() => setBtnHov(true)}
+              onMouseLeave={() => setBtnHov(false)}
+              style={{
+                width: '100%', background: btnHov && !status.startsWith('loading') ? '#1E40AF' : '#1D4ED8',
+                color: '#fff', fontWeight: 600, padding: '14px 24px',
+                borderRadius: '12px', fontSize: '14px', border: 'none',
+                cursor: status === 'loading' || !consent ? 'not-allowed' : 'pointer',
+                opacity: status === 'loading' || !consent ? 0.5 : 1,
+                transition: 'transform 160ms ease-out, opacity 150ms ease-out, background-color 150ms ease-out',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}
             >
               {status === 'loading' ? '...' : t('cta')}
             </button>

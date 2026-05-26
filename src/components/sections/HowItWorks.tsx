@@ -1,16 +1,17 @@
+'use client'
+
 import { useTranslations } from 'next-intl'
 import { ScrollReveal } from '@/components/ui/ScrollReveal'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const stepIcons = [
-  // 01 Upload
-  <svg key="s1" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mb-5" aria-hidden="true">
+  <svg key="s1" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '40px', height: '40px', marginBottom: '20px' }} aria-hidden="true">
     <rect width="40" height="40" rx="10" fill="#EFF6FF" />
     <path d="M20 27V16M16 20l4-4 4 4" stroke="#1D4ED8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     <rect x="10" y="27" width="20" height="5" rx="2" stroke="#1D4ED8" strokeWidth="1.5" />
     <circle cx="29" cy="29.5" r="1.5" fill="#1D4ED8" opacity="0.5" />
   </svg>,
-  // 02 View & comment
-  <svg key="s2" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mb-5" aria-hidden="true">
+  <svg key="s2" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '40px', height: '40px', marginBottom: '20px' }} aria-hidden="true">
     <rect width="40" height="40" rx="10" fill="#EFF6FF" />
     <rect x="8" y="13" width="18" height="14" rx="2.5" stroke="#1D4ED8" strokeWidth="1.5" />
     <rect x="8" y="13" width="18" height="5" rx="2.5" fill="#DBEAFE" stroke="#1D4ED8" strokeWidth="1.5" />
@@ -18,15 +19,13 @@ const stepIcons = [
     <rect x="25" y="13" width="7" height="2.5" rx="1" fill="#1D4ED8" opacity="0.4" />
     <rect x="25" y="17" width="5" height="2.5" rx="1" fill="#1D4ED8" opacity="0.4" />
   </svg>,
-  // 03 Sign & pay
-  <svg key="s3" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mb-5" aria-hidden="true">
+  <svg key="s3" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '40px', height: '40px', marginBottom: '20px' }} aria-hidden="true">
     <rect width="40" height="40" rx="10" fill="#EFF6FF" />
     <rect x="9" y="8" width="17" height="22" rx="2.5" stroke="#1D4ED8" strokeWidth="1.5" />
     <path d="M13 17h9M13 21h7" stroke="#1D4ED8" strokeWidth="1.5" strokeLinecap="round" />
     <path d="M23 24l8-8 3 3-8 8H23v-3Z" stroke="#1D4ED8" strokeWidth="1.5" strokeLinejoin="round" />
   </svg>,
-  // 04 Deliver & paid
-  <svg key="s4" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 mb-5" aria-hidden="true">
+  <svg key="s4" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '40px', height: '40px', marginBottom: '20px' }} aria-hidden="true">
     <rect width="40" height="40" rx="10" fill="#EFF6FF" />
     <circle cx="20" cy="20" r="12" stroke="#1D4ED8" strokeWidth="1.5" />
     <path d="M14 20l4 4 8-8" stroke="#1D4ED8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -36,31 +35,34 @@ const stepIcons = [
 export function HowItWorks() {
   const t = useTranslations('howitworks')
   const steps = t.raw('steps') as Array<{ number: string; title: string; body: string }>
+  const { isMobile } = useBreakpoint()
 
   return (
-    <section className="py-24 sm:py-32 px-6 sm:px-8 bg-surface">
-      <div className="max-w-5xl mx-auto">
+    <section style={{ padding: '96px 24px', background: '#F8FAFC' }}>
+      <div style={{ maxWidth: '1024px', margin: '0 auto' }}>
         <ScrollReveal>
-          <span className="text-xs font-semibold uppercase tracking-widest text-blue-royal mb-4 block">
+          <span style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#1D4ED8', marginBottom: '16px', display: 'block', fontFamily: 'Inter, system-ui, sans-serif' }}>
             {t('label')}
           </span>
-          <h2 className="font-display font-bold text-3xl sm:text-4xl text-ink leading-tight mb-16 max-w-xl">
+          <h2 style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 36px)', color: '#0F172A', lineHeight: 1.25, marginBottom: '64px', maxWidth: '576px' }}>
             {t('headline')}
           </h2>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '24px' }}>
           {steps.map((step, i) => (
             <ScrollReveal key={i} delay={i * 0.05}>
-              <div className="bg-white rounded-2xl p-8 h-full border border-gray-100">
+              <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', height: '100%', border: '1px solid #F1F5F9' }}>
                 {stepIcons[i]}
-                <span className="font-mono text-xs font-bold text-blue-royal/50 block mb-4 tabular-nums">
+                <span style={{ fontFamily: '"Geist Mono", monospace', fontSize: '12px', fontWeight: 700, color: 'rgba(29,78,216,0.5)', display: 'block', marginBottom: '16px', fontVariantNumeric: 'tabular-nums' }}>
                   {step.number}
                 </span>
-                <h3 className="font-display font-bold text-lg text-ink mb-3 leading-snug">
+                <h3 style={{ fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', fontWeight: 700, fontSize: '18px', color: '#0F172A', marginBottom: '12px', lineHeight: 1.375 }}>
                   {step.title}
                 </h3>
-                <p className="text-muted text-sm leading-relaxed">{step.body}</p>
+                <p style={{ color: '#64748B', fontSize: '14px', lineHeight: 1.625, fontFamily: 'Inter, system-ui, sans-serif' }}>
+                  {step.body}
+                </p>
               </div>
             </ScrollReveal>
           ))}

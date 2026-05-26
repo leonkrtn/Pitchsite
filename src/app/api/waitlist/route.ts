@@ -22,11 +22,11 @@ export async function POST(req: NextRequest) {
   const supabase = createAdminClient()
 
   // Check for existing confirmed entry
-  const { data: existing } = await supabase
+  const { data: existing } = await (supabase as any)
     .from('waitlist')
     .select('id, confirmed')
     .eq('email', cleanEmail)
-    .single()
+    .single() as { data: { id: string; confirmed: boolean } | null }
 
   if (existing?.confirmed) {
     return NextResponse.json({ error: 'Already registered', code: 'EXISTS' }, { status: 409 })
@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
 
   if (existing && !existing.confirmed) {
     // Resend confirmation with new token
-    await supabase.from('waitlist').update({ token, name: cleanName }).eq('email', cleanEmail)
+    await (supabase as any).from('waitlist').update({ token, name: cleanName }).eq('email', cleanEmail)
   } else {
-    const { error } = await supabase.from('waitlist').insert({
+    const { error } = await (supabase as any).from('waitlist').insert({
       name: cleanName,
       email: cleanEmail,
       language: locale,

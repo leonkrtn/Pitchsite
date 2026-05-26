@@ -22,17 +22,12 @@ export function SparkleText({ children }: { children: string }) {
       setIsAnimating(true)
       setTimeout(() => setIsAnimating(false), EFFECT_DURATION)
     }, EFFECT_INTERVAL)
-
-    return () => {
-      clearTimeout(stop)
-      clearInterval(interval)
-    }
+    return () => { clearTimeout(stop); clearInterval(interval) }
   }, [])
 
   return (
-    <span className="relative inline-block">
+    <span style={{ position: 'relative', display: 'inline-block' }}>
       <span
-        className="text-blue-royal"
         style={isAnimating ? {
           background: 'linear-gradient(105deg, #1D4ED8 0%, #1D4ED8 28%, #93c5fd 43%, #dbeafe 50%, #93c5fd 57%, #1D4ED8 72%, #1D4ED8 100%)',
           backgroundSize: '280% auto',
@@ -41,29 +36,20 @@ export function SparkleText({ children }: { children: string }) {
           WebkitTextFillColor: 'transparent',
           color: 'transparent',
           animation: 'sparkle-sweep 2.8s linear forwards',
-        } : undefined}
+        } : { color: '#1D4ED8' }}
       >
         {children}
       </span>
 
       {isAnimating && (
         <>
-          <span
-            className="absolute text-blue-300 pointer-events-none"
-            style={{ top: '-0.55em', right: '-0.25em', animation: 'sparkle-pop 2.4s ease-in-out forwards', animationDelay: '0s' }}
-          >
+          <span style={{ position: 'absolute', color: '#93C5FD', pointerEvents: 'none', top: '-0.55em', right: '-0.25em', animation: 'sparkle-pop 2.4s ease-in-out forwards', animationDelay: '0s' }}>
             <Star size={7} />
           </span>
-          <span
-            className="absolute text-blue-200 pointer-events-none"
-            style={{ top: '0.05em', left: '0.05em', animation: 'sparkle-pop 2.4s ease-in-out forwards', animationDelay: '0.85s' }}
-          >
+          <span style={{ position: 'absolute', color: '#BFDBFE', pointerEvents: 'none', top: '0.05em', left: '0.05em', animation: 'sparkle-pop 2.4s ease-in-out forwards', animationDelay: '0.85s' }}>
             <Star size={5} />
           </span>
-          <span
-            className="absolute text-blue-400 pointer-events-none"
-            style={{ bottom: '-0.35em', right: '0.2em', animation: 'sparkle-pop 2.4s ease-in-out forwards', animationDelay: '1.6s' }}
-          >
+          <span style={{ position: 'absolute', color: '#60A5FA', pointerEvents: 'none', bottom: '-0.35em', right: '0.2em', animation: 'sparkle-pop 2.4s ease-in-out forwards', animationDelay: '1.6s' }}>
             <Star size={5} />
           </span>
         </>

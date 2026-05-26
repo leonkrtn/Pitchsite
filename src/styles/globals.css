@@ -5,6 +5,16 @@
 :root {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --font-inter: 'Inter', system-ui, sans-serif;
+  --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Design tokens */
+  --ink: #0F172A;
+  --muted: #64748B;
+  --surface: #F8FAFC;
+  --blue-royal: #1D4ED8;
+  --blue-light: #EFF6FF;
+  --border: #E2E8F0;
 }
 
 html {
@@ -22,6 +32,8 @@ html {
   color: #ffffff;
 }
 
+/* ── Animations ─────────────────────────────────── */
+
 @keyframes shimmer {
   to { transform: translateX(200%); }
 }
@@ -34,6 +46,36 @@ html {
 @keyframes sparkle-pop {
   0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
   50% { transform: scale(1) rotate(15deg); opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes dropIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes successPop {
+  0%   { transform: scale(0); }
+  60%  { transform: scale(1.1); }
+  80%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+@keyframes ping {
+  75%, 100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes countUp {
+  from { clip-path: inset(100% 0 0 0); opacity: 0; }
+  to   { clip-path: inset(0 0 0 0); opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {

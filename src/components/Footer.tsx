@@ -1,17 +1,43 @@
+'use client'
+
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import { LanguageToggle } from '@/components/ui/LanguageToggle'
 
 export function Footer() {
   const t = useTranslations('footer')
+  const locale = useLocale()
+  const router = useRouter()
+  const [platformHov, setPlatformHov] = useState(false)
 
   return (
-    <footer className="border-t border-gray-100 py-10 px-6 sm:px-8">
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted">
+    <footer style={{ borderTop: '1px solid #F1F5F9', padding: '40px 24px' }}>
+      <div style={{
+        maxWidth: '1024px', margin: '0 auto',
+        display: 'flex', flexWrap: 'wrap',
+        alignItems: 'center', justifyContent: 'space-between', gap: '16px',
+        fontSize: '14px', color: '#64748B', fontFamily: 'Inter, system-ui, sans-serif',
+      }}>
         <p>{t('rights')}</p>
-        <div className="flex items-center gap-6">
-          {/* Shown but not linked — will be added after legal setup */}
-          <span className="cursor-default opacity-50">{t('impressum')}</span>
-          <span className="cursor-default opacity-50">{t('datenschutz')}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+          <span style={{ cursor: 'default', opacity: 0.5 }}>{t('impressum')}</span>
+          <span style={{ cursor: 'default', opacity: 0.5 }}>{t('datenschutz')}</span>
+          <button
+            onClick={() => router.push(`/${locale}/app/login`)}
+            onMouseEnter={() => setPlatformHov(true)}
+            onMouseLeave={() => setPlatformHov(false)}
+            style={{
+              fontSize: '13px', fontWeight: 500,
+              color: platformHov ? '#1D4ED8' : '#94A3B8',
+              background: 'none', border: 'none', cursor: 'pointer',
+              transition: 'color 150ms ease',
+              fontFamily: 'Inter, system-ui, sans-serif',
+            }}
+          >
+            {t('tryPlatform')}
+          </button>
           <LanguageToggle />
         </div>
       </div>
