@@ -50,6 +50,10 @@ const T = {
     errorCreate: 'Projekt konnte nicht erstellt werden.',
     errorNoFile: 'Bitte lade zuerst eine Datei hoch.',
     errorNoName: 'Bitte gib einen Projektnamen ein.',
+    accessTitle: 'Pitch-Zugang',
+    accessSub: 'Dein Kunde muss dieses Passwort eingeben, bevor er den Pitch öffnen kann.',
+    accessLabel: 'Einmalpasswort für Kunden',
+    accessPh: 'z.B. Sommer2024',
   },
   en: {
     breadcrumb: 'Dashboard',
@@ -93,6 +97,10 @@ const T = {
     errorCreate: 'Could not create project.',
     errorNoFile: 'Please upload a file first.',
     errorNoName: 'Please enter a project name.',
+    accessTitle: 'Pitch access',
+    accessSub: 'Your client must enter this password before viewing the pitch.',
+    accessLabel: 'One-time password for client',
+    accessPh: 'e.g. Summer2024',
   },
 }
 
@@ -122,6 +130,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
   const [fileSize, setFileSize] = useState('')
   const [projectCode, setProjectCode] = useState('')
   const [fileUrl, setFileUrl] = useState('')
+  const [pitchPassword, setPitchPassword] = useState('')
   const [copied, setCopied] = useState(false)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [error, setError] = useState('')
@@ -206,6 +215,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
         client_phone: clientPhone.trim() || null,
         client_company: clientCompany.trim() || null,
         client_website: clientWebsite.trim() || null,
+        pitch_password: pitchPassword.trim() || null,
       })
       .select()
       .single() as { data: { id: string } | null; error: Error | null }
@@ -311,6 +321,24 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
           <Input
             label={t.clientWebsiteLabel} placeholder={t.clientWebsitePh}
             value={clientWebsite} onChange={e => setClientWebsite(e.target.value)}
+            style={{ marginBottom: 0 }}
+          />
+        </div>
+
+        {/* Pitch access password */}
+        <div style={{ marginTop: '16px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px 24px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A', marginBottom: '2px' }}>
+            {t.accessTitle}
+          </div>
+          <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#94A3B8', marginBottom: '14px' }}>
+            {t.accessSub}
+          </div>
+          <Input
+            label={t.accessLabel}
+            type="text"
+            placeholder={t.accessPh}
+            value={pitchPassword}
+            onChange={e => setPitchPassword(e.target.value)}
             style={{ marginBottom: 0 }}
           />
         </div>

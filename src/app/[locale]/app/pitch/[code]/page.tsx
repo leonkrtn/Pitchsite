@@ -89,6 +89,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<'comment' | 'accept' | null>(null)
   const [showSetupPw, setShowSetupPw] = useState(false)
+  const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
   const frameRef = useRef<HTMLDivElement>(null)
 
@@ -122,6 +123,13 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
       }
 
       setProject(proj)
+
+      // Password gate: show for non-designers who haven't unlocked yet
+      const isDesigner = user?.id === proj.designer_id
+      const isUnlocked = typeof window !== 'undefined' && !!localStorage.getItem(`pitch_unlocked_${code}`)
+      if ((proj as any).pitch_password && !isDesigner && !isUnlocked) {
+        setShowPasswordGate(true)
+      }
 
       if (user) {
         setCurrentUserId(user.id)
@@ -237,6 +245,21 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC' }}>
         <div style={{ textAlign: 'center', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>{t.notFound}</div>
       </div>
+    )
+  }
+
+  if (showPasswordGate) {
+    return (
+      <PasswordGate
+        correctPassword={(project as any).pitch_password}
+        locale={locale}
+        onUnlock={() => {
+          localStorage.setItem(`pitch_unlocked_${code}`, '1')
+          localStorage.setItem(`pitch_access_${code}`, '1')
+          setShowPasswordGate(false)
+          if (!(project as any).pitch_password_changed) setShowSetupPw(true)
+        }}
+      />
     )
   }
 
@@ -415,6 +438,92 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
           onPinClick={id => { setActivePin(id); setSidebarOpen(false) }}
         />
       )}
+    </div>
+  )
+}
+
+// ── PASSWORD GATE ─────────────────────────────────────────
+
+function PasswordGate({ correctPassword, onUnlock, locale }: {
+  correctPassword: string
+  onUnlock: () => void
+  locale: string
+}) {
+  const [input, setInput] = useState('')
+  const [error, setError] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const isDE = locale !== 'en'
+
+  const labels = {
+    title: isDE ? 'Passwortgeschützter Pitch' : 'Password-protected pitch',
+    sub: isDE
+      ? 'Dein Designer hat dir ein Passwort mitgeteilt. Gib es hier ein um den Entwurf zu öffnen.'
+      : 'Your designer shared a password with you. Enter it below to view the design.',
+    placeholder: isDE ? 'Passwort eingeben' : 'Enter password',
+    cta: isDE ? 'Öffnen' : 'Open',
+    errorMsg: isDE ? 'Falsches Passwort. Bitte nochmal versuchen.' : 'Wrong password. Please try again.',
+  }
+
+  const submit = () => {
+    if (input === correctPassword) {
+      onUnlock()
+    } else {
+      setError(true)
+      setInput('')
+    }
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 400, background: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '400px', padding: '40px 36px', boxShadow: '0 32px 80px rgba(0,0,0,.5)', animation: 'dropIn 200ms ease-out' }}>
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+          <KeyRound size={22} color="#1D4ED8" />
+        </div>
+        <h2 style={{ fontSize: '20px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '8px' }}>
+          {labels.title}
+        </h2>
+        <p style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B', marginBottom: '28px', lineHeight: 1.6 }}>
+          {labels.sub}
+        </p>
+        {error && (
+          <div style={{ padding: '10px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#DC2626' }}>
+            {labels.errorMsg}
+          </div>
+        )}
+        <div style={{ marginBottom: '16px' }}>
+          <input
+            type="password"
+            value={input}
+            onChange={e => { setInput(e.target.value); setError(false) }}
+            onKeyDown={e => e.key === 'Enter' && submit()}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            placeholder={labels.placeholder}
+            autoFocus
+            style={{
+              width: '100%', height: '44px', border: `1.5px solid ${error ? '#FECACA' : focused ? '#1D4ED8' : '#E2E8F0'}`,
+              borderRadius: '10px', padding: '0 14px', fontSize: '15px', fontFamily: 'Inter, sans-serif',
+              outline: 'none', boxSizing: 'border-box',
+              boxShadow: focused ? '0 0 0 3px rgba(29,78,216,.1)' : 'none',
+              transition: 'border-color 150ms, box-shadow 150ms',
+            }}
+          />
+        </div>
+        <button
+          onClick={submit}
+          disabled={!input}
+          style={{
+            width: '100%', height: '48px', background: input ? '#1D4ED8' : '#E2E8F0',
+            color: input ? '#fff' : '#94A3B8', border: 'none', borderRadius: '12px',
+            fontSize: '15px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
+            cursor: input ? 'pointer' : 'not-allowed', transition: 'background 150ms, color 150ms',
+          }}
+          onMouseEnter={e => { if (input) e.currentTarget.style.background = '#1E40AF' }}
+          onMouseLeave={e => { if (input) e.currentTarget.style.background = '#1D4ED8' }}
+        >
+          {labels.cta}
+        </button>
+      </div>
     </div>
   )
 }
