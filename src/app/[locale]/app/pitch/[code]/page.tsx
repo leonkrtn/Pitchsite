@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { MessageCircle, X, MousePointer, LogIn, UserPlus, KeyRound } from 'lucide-react'
+import { MessageCircle, X, MousePointer, LogIn, UserPlus, KeyRound, Monitor, Smartphone } from 'lucide-react'
 import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
@@ -93,6 +93,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showSetupPw, setShowSetupPw] = useState(false)
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -367,91 +368,177 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       {/* Toolbar */}
       <div style={{ height: `${toolbarH}px`, background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: isMobile ? '0 16px' : '0 24px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, zIndex: 49 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>{t.commentMode}</span>
-          <ToggleSwitch on={commentMode} onChange={setCommentMode} />
-          <span style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>
-            {commentMode ? t.on : t.off}
-          </span>
+        {/* Comment mode toggle — hidden in mobile preview since pins are desktop-only */}
+        {previewMode === 'desktop' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>{t.commentMode}</span>
+              <ToggleSwitch on={commentMode} onChange={setCommentMode} />
+              <span style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>
+                {commentMode ? t.on : t.off}
+              </span>
+            </div>
+            {commentMode && !isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '9999px', padding: '6px 14px' }}>
+                <MousePointer size={14} color="#D97706" />
+                <span style={{ fontSize: '13px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#92400E' }}>{t.commentHint}</span>
+              </div>
+            )}
+            {commentMode && isMobile && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '9999px', padding: '5px 10px' }}>
+                <MousePointer size={12} color="#D97706" />
+                <span style={{ fontSize: '11px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#92400E' }}>{t.commentHint}</span>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Device preview switcher */}
+        <div style={{ marginLeft: 'auto', display: 'flex', background: '#E2E8F0', borderRadius: '8px', padding: '3px', gap: '2px' }}>
+          {(['desktop', 'mobile'] as const).map(mode => (
+            <button
+              key={mode}
+              onClick={() => { setPreviewMode(mode); if (mode === 'mobile') setCommentMode(false) }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '5px',
+                padding: isMobile ? '4px 8px' : '4px 12px',
+                borderRadius: '6px', border: 'none', cursor: 'pointer',
+                background: previewMode === mode ? '#fff' : 'transparent',
+                color: previewMode === mode ? '#0F172A' : '#64748B',
+                boxShadow: previewMode === mode ? '0 1px 3px rgba(0,0,0,.1)' : 'none',
+                transition: 'all 150ms', fontFamily: 'Inter, sans-serif',
+                fontSize: '12px', fontWeight: 500,
+              }}
+            >
+              {mode === 'desktop' ? <Monitor size={13} /> : <Smartphone size={13} />}
+              {!isMobile && (mode === 'desktop' ? 'Desktop' : 'Mobile')}
+            </button>
+          ))}
         </div>
-        {commentMode && !isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '9999px', padding: '6px 14px' }}>
-            <MousePointer size={14} color="#D97706" />
-            <span style={{ fontSize: '13px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#92400E' }}>{t.commentHint}</span>
-          </div>
-        )}
-        {commentMode && isMobile && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '9999px', padding: '5px 10px' }}>
-            <MousePointer size={12} color="#D97706" />
-            <span style={{ fontSize: '11px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#92400E' }}>{t.commentHint}</span>
-          </div>
-        )}
       </div>
 
       {/* Viewport */}
       <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', position: 'relative', display: 'flex', flexDirection: 'column', marginBottom: `${bottomBarH}px` }}>
-        <div style={{ flex: 1, padding: isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: isMobile ? 'auto' : 'hidden', overflowY: 'auto' }}>
-          <div
-            ref={frameRef}
-            onClick={handleFrameClick}
-            style={{
-              width: '1280px',
-              background: '#fff',
-              boxShadow: '0 20px 80px rgba(0,0,0,.4)',
-              position: 'relative',
-              cursor: commentMode ? 'crosshair' : 'default',
-              flexShrink: 0,
-              overflow: 'hidden',
-              alignSelf: 'stretch',
-            }}
-          >
-            {/* Iframe showing uploaded design */}
-            {project.file_url ? (
-              blobSrc ? (
-                <iframe
-                  src={blobSrc}
-                  sandbox="allow-same-origin allow-scripts"
-                  style={{ width: '1280px', height: '100%', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
-                  title={project.name}
-                />
+        <div style={{ flex: 1, padding: previewMode === 'mobile' ? '32px 24px' : isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: previewMode === 'mobile' ? 'center' : 'flex-start', overflowX: isMobile && previewMode === 'desktop' ? 'auto' : 'hidden', overflowY: 'auto' }}>
+
+          {previewMode === 'desktop' ? (
+            /* ── Desktop frame ── */
+            <div
+              ref={frameRef}
+              onClick={handleFrameClick}
+              style={{
+                width: '1280px',
+                background: '#fff',
+                boxShadow: '0 20px 80px rgba(0,0,0,.4)',
+                position: 'relative',
+                cursor: commentMode ? 'crosshair' : 'default',
+                flexShrink: 0,
+                overflow: 'hidden',
+                alignSelf: 'stretch',
+              }}
+            >
+              {project.file_url ? (
+                blobSrc ? (
+                  <iframe
+                    src={blobSrc}
+                    sandbox="allow-same-origin allow-scripts"
+                    style={{ width: '1280px', height: '100%', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
+                    title={project.name}
+                  />
+                ) : (
+                  <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                    Lädt…
+                  </div>
+                )
               ) : (
-                <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
-                  Lädt…
+                <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+                  No design file uploaded
                 </div>
-              )
-            ) : (
-              <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
-                No design file uploaded
-              </div>
-            )}
+              )}
 
-            {/* Pins overlay */}
-            {pins.map((pin, i) => (
-              <CommentPin
-                key={pin.id}
-                pin={pin}
-                number={i + 1}
-                active={activePin === pin.id}
-                onClick={() => setActivePin(activePin === pin.id ? null : pin.id)}
-                t={t}
-              />
-            ))}
-
-            {/* New pin placeholder + popover */}
-            {newPin && commentMode && (
-              <>
-                <div style={{ position: 'absolute', left: `${newPin.x}%`, top: `${newPin.y}%`, width: '28px', height: '28px', borderRadius: '50% 50% 50% 0', background: 'rgba(29,78,216,.6)', border: '2px solid #fff', zIndex: 10 }} />
-                <NewCommentPopover
-                  pos={newPin}
-                  onClose={() => setNewPin(null)}
-                  onSubmit={handleAddComment}
-                  placeholder={t.commentPh}
-                  cancelLabel={t.cancel}
-                  sendLabel={t.send}
+              {pins.map((pin, i) => (
+                <CommentPin
+                  key={pin.id}
+                  pin={pin}
+                  number={i + 1}
+                  active={activePin === pin.id}
+                  onClick={() => setActivePin(activePin === pin.id ? null : pin.id)}
+                  t={t}
                 />
-              </>
-            )}
-          </div>
+              ))}
+
+              {newPin && commentMode && (
+                <>
+                  <div style={{ position: 'absolute', left: `${newPin.x}%`, top: `${newPin.y}%`, width: '28px', height: '28px', borderRadius: '50% 50% 50% 0', background: 'rgba(29,78,216,.6)', border: '2px solid #fff', zIndex: 10 }} />
+                  <NewCommentPopover
+                    pos={newPin}
+                    onClose={() => setNewPin(null)}
+                    onSubmit={handleAddComment}
+                    placeholder={t.commentPh}
+                    cancelLabel={t.cancel}
+                    sendLabel={t.send}
+                  />
+                </>
+              )}
+            </div>
+          ) : (
+            /* ── Mobile / Phone mockup ── */
+            <div style={{
+              width: '393px',
+              flexShrink: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignSelf: 'stretch',
+              borderRadius: '50px',
+              border: '10px solid #1C1C1E',
+              boxShadow: '0 0 0 2px #3A3A3C, 0 40px 120px rgba(0,0,0,.7)',
+              overflow: 'hidden',
+              background: '#fff',
+              position: 'relative',
+            }}>
+              {/* Status bar */}
+              <div style={{ height: '44px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0, position: 'relative' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>9:41</span>
+                {/* Dynamic island */}
+                <div style={{ position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)', width: '117px', height: '34px', background: '#1C1C1E', borderRadius: '20px' }} />
+                {/* Battery + signal */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
+                    <rect x="0" y="1" width="13" height="8" rx="2" stroke="#0F172A" strokeWidth="1.2"/>
+                    <rect x="1" y="2" width="9" height="6" rx="1" fill="#0F172A"/>
+                    <path d="M14 3.5v3a1.5 1.5 0 000-3z" fill="#0F172A"/>
+                  </svg>
+                </div>
+              </div>
+
+              {/* Screen — iframe scrolls inside */}
+              <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+                {project.file_url ? (
+                  blobSrc ? (
+                    <iframe
+                      src={blobSrc}
+                      sandbox="allow-same-origin allow-scripts"
+                      style={{ width: '393px', height: '100%', minHeight: '600px', border: 'none', display: 'block' }}
+                      title={project.name}
+                    />
+                  ) : (
+                    <div style={{ width: '393px', height: '100%', minHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                      Lädt…
+                    </div>
+                  )
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '600px', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+                    No design file uploaded
+                  </div>
+                )}
+              </div>
+
+              {/* Home indicator */}
+              <div style={{ height: '34px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: '134px', height: '5px', background: '#1C1C1E', borderRadius: '3px' }} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
