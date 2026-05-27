@@ -276,19 +276,19 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
           >
             {acceptHov && (
               <div style={{
-                position: 'absolute', bottom: 'calc(100% + 10px)', right: 0,
+                position: 'absolute', top: 'calc(100% + 10px)', right: 0,
                 background: '#0F172A', borderRadius: '8px', padding: '9px 13px',
                 pointerEvents: 'none', zIndex: 60,
                 animation: 'fadeInUp 150ms ease-out', whiteSpace: 'nowrap',
                 boxShadow: '0 8px 24px rgba(0,0,0,.2)',
               }}>
+                <div style={{ position: 'absolute', top: '-4px', right: '18px', width: '8px', height: '8px', background: '#0F172A', transform: 'rotate(45deg)' }} />
                 <div style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#fff', marginBottom: '2px' }}>
                   {t.acceptHint}
                 </div>
                 <div style={{ fontSize: '11px', fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,.6)' }}>
                   {t.acceptHintSub}
                 </div>
-                <div style={{ position: 'absolute', bottom: '-4px', right: '18px', width: '8px', height: '8px', background: '#0F172A', transform: 'rotate(45deg)' }} />
               </div>
             )}
             <div style={{ transform: acceptHov ? 'scale(1.06)' : 'scale(1)', transition: 'transform 200ms cubic-bezier(.34,1.56,.64,1)' }}>
