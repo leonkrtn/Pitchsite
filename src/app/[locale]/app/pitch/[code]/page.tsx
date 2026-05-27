@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { MessageCircle, ZoomIn, ZoomOut, X, MousePointer, LogIn, UserPlus, KeyRound } from 'lucide-react'
+import { MessageCircle, X, MousePointer, LogIn, UserPlus, KeyRound } from 'lucide-react'
 import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
@@ -80,7 +80,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [commentMode, setCommentMode] = useState(false)
   const [activePin, setActivePin] = useState<string | null>(null)
   const [newPin, setNewPin] = useState<{ x: number; y: number } | null>(null)
-  const [zoom, setZoom] = useState(100)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [acceptLoading, setAcceptLoading] = useState(false)
   const [acceptHov, setAcceptHov] = useState(false)
@@ -351,15 +350,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
             <span style={{ fontSize: '13px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#92400E' }}>{t.commentHint}</span>
           </div>
         )}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button onClick={() => setZoom(z => Math.max(50, z - 10))} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ZoomOut size={14} color="#64748B" />
-          </button>
-          <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B', minWidth: '40px', textAlign: 'center' }}>{zoom}%</span>
-          <button onClick={() => setZoom(z => Math.min(150, z + 10))} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <ZoomIn size={14} color="#64748B" />
-          </button>
-        </div>
       </div>
 
       {/* Viewport */}
@@ -369,7 +359,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
             ref={frameRef}
             onClick={handleFrameClick}
             style={{
-              width: `${1280 * zoom / 100}px`,
+              width: '1280px',
               background: '#fff',
               boxShadow: '0 20px 80px rgba(0,0,0,.4)',
               position: 'relative',
@@ -686,7 +676,7 @@ function CommentPin({ pin, number, active, onClick, t }: { pin: Pin; number: num
   return (
     <div style={{ position: 'absolute', left: `${pin.x_pct}%`, top: `${pin.y_pct}%`, zIndex: 10 }}>
       <div
-        onClick={onClick}
+        onClick={e => { e.stopPropagation(); onClick() }}
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
@@ -737,7 +727,7 @@ function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, s
   const [text, setText] = useState('')
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{
+    <div onClick={e => e.stopPropagation()} style={{
       position: 'absolute', left: `calc(${pos.x}% + 32px)`, top: `calc(${pos.y}% - 8px)`,
       width: '300px', background: '#fff', border: '1px solid #E2E8F0',
       borderRadius: '12px', padding: '16px', boxShadow: '0 8px 32px rgba(0,0,0,.15)', zIndex: 30,
