@@ -22,7 +22,7 @@ const T = {
     textSigBtn: 'Mit Text unterschreiben',
     drawBtn: 'Zeichnen',
     textSigPh: 'Deinen Namen eingeben...',
-    agreeText: 'Ich habe den Vertrag vollständig gelesen und stimme den Bedingungen zu. Ich bin mir bewusst, dass dies ein rechtlich bindender Vertrag ist, der in Deutschland, Österreich und der Schweiz vollstreckbar ist.',
+    agreeText: 'Ich habe den Vertrag vollständig gelesen und stimme den Bedingungen zu. Ich bestätige, dass ich der beauftragende Auftraggeber bin und nicht die ausführende Auftragnehmerin. Mir ist bewusst, dass eine Falschidentifikation rechtliche Konsequenzen hat und zur sofortigen Kontosperrung führt.',
     total: 'Gesamtbetrag:',
     pitchFee: '5% Pitchsite',
     submit: 'Unterschreiben & zur Zahlung',
@@ -41,7 +41,7 @@ const T = {
     textSigBtn: 'Type your signature',
     drawBtn: 'Draw',
     textSigPh: 'Enter your name...',
-    agreeText: 'I have read the contract in full and agree to the terms. I understand that this is a legally binding contract, enforceable in Germany, Austria and Switzerland.',
+    agreeText: 'I have read the contract in full and agree to the terms. I confirm that I am the commissioning client and not the service provider. I understand that a false identity declaration has legal consequences and will result in immediate account suspension.',
     total: 'Total amount:',
     pitchFee: '5% Pitchsite',
     submit: 'Sign & proceed to payment',
@@ -91,7 +91,11 @@ Upon full payment, all usage rights transfer to the Client. The Contractor retai
 
 §7 Governing Law
 
-German law applies. Jurisdiction is Munich. This contract is enforceable in Germany, Austria and Switzerland.`
+German law applies. Jurisdiction is Munich. This contract is enforceable in Germany, Austria and Switzerland.
+
+§8 Identity Confirmation and Fraud Prevention
+
+By signing this contract, the signatory confirms that they are the authorised Client as named above, and are not the Contractor or any person acting on behalf of the Contractor. Accepting this contract in one's own name as the Contractor — or facilitating such acceptance — constitutes fraudulent misrepresentation. In such cases Pitchsite reserves the right to reverse all payments, permanently suspend the account, and report the incident to the competent authorities. The Contractor expressly agrees not to use any method to circumvent this restriction.`
   }
 
   return `PROJEKTVERTRAG
@@ -126,7 +130,11 @@ Mit vollständiger Zahlung gehen alle Nutzungsrechte am erstellten Design auf de
 
 §7 Anwendbares Recht
 
-Es gilt deutsches Recht. Gerichtsstand ist München. Dieser Vertrag ist in Deutschland, Österreich und der Schweiz vollstreckbar.`
+Es gilt deutsches Recht. Gerichtsstand ist München. Dieser Vertrag ist in Deutschland, Österreich und der Schweiz vollstreckbar.
+
+§8 Identitätsbestätigung und Betrugsverhinderung
+
+Mit der Unterzeichnung dieses Vertrages bestätigt die unterzeichnende Person, dass sie der oben genannte beauftragende Auftraggeber ist und nicht die Auftragnehmerin oder eine in deren Auftrag handelnde Person. Die Annahme dieses Vertrages im eigenen Namen als Auftragnehmerin – oder die Mitwirkung daran – stellt einen arglistigen Betrug dar. In solchen Fällen behält sich Pitchsite das Recht vor, alle Zahlungen rückgängig zu machen, das Konto dauerhaft zu sperren und den Vorfall den zuständigen Behörden zu melden. Die Auftragnehmerin verpflichtet sich ausdrücklich, keine Maßnahmen zur Umgehung dieser Regelung vorzunehmen.`
 }
 
 export default function ContractPage({ params }: { params: { locale: string; code: string } }) {
