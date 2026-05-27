@@ -16,6 +16,8 @@ const T = {
     by: 'von',
     comments: 'Kommentare',
     accept: '✓ Projekt annehmen',
+    acceptHint: 'Zum nächsten Schritt →',
+    acceptHintSub: 'Noch kein finaler Abschluss',
     commentMode: 'Kommentarmodus:',
     on: 'EIN', off: 'AUS',
     commentHint: 'Klicke irgendwo auf das Design um einen Kommentar zu setzen',
@@ -40,6 +42,8 @@ const T = {
     by: 'by',
     comments: 'Comments',
     accept: '✓ Accept project',
+    acceptHint: 'Continue to next step →',
+    acceptHintSub: 'Nothing is final yet',
     commentMode: 'Comment mode:',
     on: 'ON', off: 'OFF',
     commentHint: 'Click anywhere on the design to add a comment',
@@ -77,6 +81,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [zoom, setZoom] = useState(100)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [acceptLoading, setAcceptLoading] = useState(false)
+  const [acceptHov, setAcceptHov] = useState(false)
   const [authorName, setAuthorName] = useState('')
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -246,9 +251,34 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               {pins.length} {t.comments}
             </span>
           </div>
-          <Button variant="primary" loading={acceptLoading} onClick={handleAccept} style={{ height: '40px' }}>
-            {t.accept}
-          </Button>
+          <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setAcceptHov(true)}
+            onMouseLeave={() => setAcceptHov(false)}
+          >
+            {acceptHov && (
+              <div style={{
+                position: 'absolute', bottom: 'calc(100% + 10px)', right: 0,
+                background: '#0F172A', borderRadius: '8px', padding: '9px 13px',
+                pointerEvents: 'none', zIndex: 60,
+                animation: 'fadeInUp 150ms ease-out', whiteSpace: 'nowrap',
+                boxShadow: '0 8px 24px rgba(0,0,0,.2)',
+              }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#fff', marginBottom: '2px' }}>
+                  {t.acceptHint}
+                </div>
+                <div style={{ fontSize: '11px', fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,.6)' }}>
+                  {t.acceptHintSub}
+                </div>
+                <div style={{ position: 'absolute', bottom: '-4px', right: '18px', width: '8px', height: '8px', background: '#0F172A', transform: 'rotate(45deg)' }} />
+              </div>
+            )}
+            <div style={{ transform: acceptHov ? 'scale(1.06)' : 'scale(1)', transition: 'transform 200ms cubic-bezier(.34,1.56,.64,1)' }}>
+              <Button variant="primary" loading={acceptLoading} onClick={handleAccept} style={{ height: '40px' }}>
+                {t.accept}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
