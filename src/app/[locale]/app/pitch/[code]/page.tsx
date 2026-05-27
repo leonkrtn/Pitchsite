@@ -7,6 +7,7 @@ import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
 import { fetchAndRenderDesign } from '@/lib/renderDesign'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
@@ -74,6 +75,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const searchParams = useSearchParams()
   const supabase = createBrowserClient()
 
+  const { isMobile } = useBreakpoint()
+
   const [project, setProject] = useState<Project | null>(null)
   const [pins, setPins] = useState<Pin[]>([])
   const [loading, setLoading] = useState(true)
@@ -123,9 +126,10 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       setProject(proj)
 
-      // Password gate: show for non-designers who haven't unlocked yet
+      // Password gate: show for non-designers whose cached password doesn't match current
       const isDesigner = user?.id === proj.designer_id
-      const isUnlocked = typeof window !== 'undefined' && !!localStorage.getItem(`pitch_unlocked_${code}`)
+      const storedPw = typeof window !== 'undefined' ? localStorage.getItem(`pitch_unlocked_${code}`) : null
+      const isUnlocked = storedPw !== null && storedPw === (proj as any).pitch_password
       if ((proj as any).pitch_password && !isDesigner && !isUnlocked) {
         setShowPasswordGate(true)
       }
@@ -253,7 +257,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         correctPassword={(project as any).pitch_password}
         locale={locale}
         onUnlock={() => {
-          localStorage.setItem(`pitch_unlocked_${code}`, '1')
+          localStorage.setItem(`pitch_unlocked_${code}`, (project as any).pitch_password)
           localStorage.setItem(`pitch_access_${code}`, '1')
           setShowPasswordGate(false)
           if (!(project as any).pitch_password_changed) setShowSetupPw(true)
@@ -261,6 +265,10 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
       />
     )
   }
+
+  const headerH = isMobile ? 52 : 64
+  const toolbarH = isMobile ? 44 : 48
+  const bottomBarH = isMobile ? 68 : 0
 
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#0F172A' }}>
@@ -286,75 +294,103 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
       )}
 
       {/* Header */}
-      <div style={{ height: '64px', background: '#fff', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0, zIndex: 50 }}>
+      <div style={{ height: `${headerH}px`, background: '#fff', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 16px' : '0 24px', flexShrink: 0, zIndex: 50 }}>
         <AppLogo />
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>{project.name}</div>
-          <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>
-            {t.by} {project.client_name || '—'} · <span style={{ fontFamily: '"Geist Mono", monospace' }}>{project.code}</span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div
-            onClick={() => setSidebarOpen(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '9999px', padding: '6px 14px', cursor: 'pointer' }}
-          >
-            <MessageCircle size={16} color="#1D4ED8" />
-            <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#1D4ED8' }}>
-              {pins.length} {t.comments}
-            </span>
-          </div>
-          <div
-            style={{ position: 'relative' }}
-            onMouseEnter={() => setAcceptHov(true)}
-            onMouseLeave={() => setAcceptHov(false)}
-          >
-            {acceptHov && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 10px)', right: 0,
-                background: '#0F172A', borderRadius: '8px', padding: '9px 13px',
-                pointerEvents: 'none', zIndex: 60,
-                animation: 'fadeInUp 150ms ease-out', whiteSpace: 'nowrap',
-                boxShadow: '0 8px 24px rgba(0,0,0,.2)',
-              }}>
-                <div style={{ position: 'absolute', top: '-4px', right: '18px', width: '8px', height: '8px', background: '#0F172A', transform: 'rotate(45deg)' }} />
-                <div style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#fff', marginBottom: '2px' }}>
-                  {t.acceptHint}
-                </div>
-                <div style={{ fontSize: '11px', fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,.6)' }}>
-                  {t.acceptHintSub}
+
+        {isMobile ? (
+          /* Mobile header: project name centered, comment badge right */
+          <>
+            <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {project.name}
+              </div>
+            </div>
+            <div
+              onClick={() => setSidebarOpen(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '9999px', padding: '5px 12px', cursor: 'pointer' }}
+            >
+              <MessageCircle size={14} color="#1D4ED8" />
+              <span style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#1D4ED8' }}>{pins.length}</span>
+            </div>
+          </>
+        ) : (
+          /* Desktop header */
+          <>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>{project.name}</div>
+              <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>
+                {t.by} {project.client_name || '—'} · <span style={{ fontFamily: '"Geist Mono", monospace' }}>{project.code}</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div
+                onClick={() => setSidebarOpen(v => !v)}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '9999px', padding: '6px 14px', cursor: 'pointer' }}
+              >
+                <MessageCircle size={16} color="#1D4ED8" />
+                <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#1D4ED8' }}>
+                  {pins.length} {t.comments}
+                </span>
+              </div>
+              <div
+                style={{ position: 'relative' }}
+                onMouseEnter={() => setAcceptHov(true)}
+                onMouseLeave={() => setAcceptHov(false)}
+              >
+                {acceptHov && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 10px)', right: 0,
+                    background: '#0F172A', borderRadius: '8px', padding: '9px 13px',
+                    pointerEvents: 'none', zIndex: 60,
+                    animation: 'fadeInUp 150ms ease-out', whiteSpace: 'nowrap',
+                    boxShadow: '0 8px 24px rgba(0,0,0,.2)',
+                  }}>
+                    <div style={{ position: 'absolute', top: '-4px', right: '18px', width: '8px', height: '8px', background: '#0F172A', transform: 'rotate(45deg)' }} />
+                    <div style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#fff', marginBottom: '2px' }}>
+                      {t.acceptHint}
+                    </div>
+                    <div style={{ fontSize: '11px', fontFamily: 'Inter, sans-serif', color: 'rgba(255,255,255,.6)' }}>
+                      {t.acceptHintSub}
+                    </div>
+                  </div>
+                )}
+                <div style={{ transform: acceptHov ? 'scale(1.06)' : 'scale(1)', transition: 'transform 200ms cubic-bezier(.34,1.56,.64,1)' }}>
+                  <Button variant="primary" loading={acceptLoading} onClick={handleAccept} style={{ height: '40px' }}>
+                    {t.accept}
+                  </Button>
                 </div>
               </div>
-            )}
-            <div style={{ transform: acceptHov ? 'scale(1.06)' : 'scale(1)', transition: 'transform 200ms cubic-bezier(.34,1.56,.64,1)' }}>
-              <Button variant="primary" loading={acceptLoading} onClick={handleAccept} style={{ height: '40px' }}>
-                {t.accept}
-              </Button>
             </div>
-          </div>
-        </div>
+          </>
+        )}
       </div>
 
       {/* Toolbar */}
-      <div style={{ height: '48px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0, zIndex: 49 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>{t.commentMode}</span>
+      <div style={{ height: `${toolbarH}px`, background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: isMobile ? '0 16px' : '0 24px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, zIndex: 49 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>{t.commentMode}</span>
           <ToggleSwitch on={commentMode} onChange={setCommentMode} />
-          <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>
             {commentMode ? t.on : t.off}
           </span>
         </div>
-        {commentMode && (
+        {commentMode && !isMobile && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '9999px', padding: '6px 14px' }}>
             <MousePointer size={14} color="#D97706" />
             <span style={{ fontSize: '13px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#92400E' }}>{t.commentHint}</span>
           </div>
         )}
+        {commentMode && isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '9999px', padding: '5px 10px' }}>
+            <MousePointer size={12} color="#D97706" />
+            <span style={{ fontSize: '11px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#92400E' }}>{t.commentHint}</span>
+          </div>
+        )}
       </div>
 
       {/* Viewport */}
-      <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', position: 'relative', display: 'flex', flexDirection: 'column', marginBottom: `${bottomBarH}px` }}>
+        <div style={{ flex: 1, padding: isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflowX: isMobile ? 'auto' : 'hidden', overflowY: 'auto' }}>
           <div
             ref={frameRef}
             onClick={handleFrameClick}
@@ -419,6 +455,15 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         </div>
       </div>
 
+      {/* Mobile fixed bottom bar — Accept button */}
+      {isMobile && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: '#fff', borderTop: '1px solid #E2E8F0', zIndex: 50, display: 'flex', gap: '10px' }}>
+          <Button variant="primary" fullWidth loading={acceptLoading} onClick={handleAccept} style={{ height: '44px', fontSize: '14px' }}>
+            {t.accept}
+          </Button>
+        </div>
+      )}
+
       {/* Comment Sidebar */}
       {sidebarOpen && (
         <CommentSidebar
@@ -426,6 +471,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
           title={t.allComments(pins.length)}
           onClose={() => setSidebarOpen(false)}
           onPinClick={id => { setActivePin(id); setSidebarOpen(false) }}
+          isMobile={isMobile}
+          topOffset={headerH + toolbarH}
         />
       )}
     </div>
@@ -756,14 +803,20 @@ function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, s
 
 // ── COMMENT SIDEBAR ───────────────────────────────────────
 
-function CommentSidebar({ pins, title, onClose, onPinClick }: {
+function CommentSidebar({ pins, title, onClose, onPinClick, isMobile, topOffset }: {
   pins: Pin[]; title: string; onClose: () => void; onPinClick: (id: string) => void
+  isMobile?: boolean; topOffset?: number
 }) {
+  const top = topOffset ?? 112
   return (
     <div style={{
-      position: 'fixed', right: 0, top: '112px', bottom: 0,
-      width: '320px', background: '#fff', borderLeft: '1px solid #E2E8F0',
+      position: 'fixed', right: 0, top: `${top}px`, bottom: 0,
+      width: isMobile ? '100%' : '320px',
+      background: '#fff',
+      borderLeft: isMobile ? 'none' : '1px solid #E2E8F0',
+      borderTop: isMobile ? '1px solid #E2E8F0' : 'none',
       zIndex: 40, display: 'flex', flexDirection: 'column',
+      boxShadow: isMobile ? '0 -8px 32px rgba(0,0,0,.15)' : 'none',
     }}>
       <div style={{ padding: '20px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '15px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>
