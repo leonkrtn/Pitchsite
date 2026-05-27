@@ -75,7 +75,7 @@ function ChatPanel({
   setText: (v: string) => void
   onSend: () => void
   sending: boolean
-  bottomRef: React.RefObject<HTMLDivElement>
+  bottomRef: React.RefObject<HTMLDivElement | null>
   t: typeof T.de
   locale: string
   isDesigner: boolean
