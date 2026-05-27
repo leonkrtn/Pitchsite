@@ -35,7 +35,10 @@ const T = {
     editProject: 'Projekt bearbeiten',
     archiveProject: 'Projekt archivieren',
     archiveConfirm: 'Projekt wirklich archivieren? Es wird aus der Übersicht entfernt.',
+    unarchiveProject: 'Archivierung aufheben',
+    unarchiveConfirm: 'Archivierung aufheben? Das Projekt erscheint wieder in der Übersicht.',
     archived: 'Archiviert',
+    unarchived: 'Archivierung aufgehoben',
     showArchived: 'Archivierte anzeigen',
     hideArchived: 'Archivierte ausblenden',
   },
@@ -56,7 +59,10 @@ const T = {
     editProject: 'Edit project',
     archiveProject: 'Archive project',
     archiveConfirm: 'Archive this project? It will be removed from the overview.',
+    unarchiveProject: 'Unarchive project',
+    unarchiveConfirm: 'Unarchive this project? It will reappear in the overview.',
     archived: 'Archived',
+    unarchived: 'Unarchived',
     showArchived: 'Show archived',
     hideArchived: 'Hide archived',
   },
@@ -133,8 +139,8 @@ function FilterTabs({ active, setActive, tabs }: { active: string; setActive: (t
 
 // ── PROJECT CARD ──────────────────────────────────────────
 
-function ProjectCard({ project, idx, locale, t, onNavigate, onArchive }: {
-  project: Project; idx: number; locale: string; t: typeof T.de; onNavigate: (id: string) => void; onArchive: (id: string) => void
+function ProjectCard({ project, idx, locale, t, onNavigate, onArchive, onUnarchive }: {
+  project: Project; idx: number; locale: string; t: typeof T.de; onNavigate: (id: string) => void; onArchive: (id: string) => void; onUnarchive: (id: string) => void
 }) {
   const [hov, setHov] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -231,7 +237,10 @@ function ProjectCard({ project, idx, locale, t, onNavigate, onArchive }: {
               <ContextMenuItem label={t.copyLink} icon={<Link size={15} />} onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${locale}/app/pitch/${project.code}`); setMenuOpen(false) }} />
               <ContextMenuItem label={t.editProject} icon={<FileText size={15} />} onClick={() => setMenuOpen(false)} />
               <Divider style={{ margin: '4px 0' }} />
-              <ContextMenuItem label={t.archiveProject} icon={<Archive size={15} />} danger onClick={() => { setMenuOpen(false); onArchive(project.id) }} />
+              {(project as any).archived
+                ? <ContextMenuItem label={t.unarchiveProject} icon={<Archive size={15} />} onClick={() => { setMenuOpen(false); onUnarchive(project.id) }} />
+                : <ContextMenuItem label={t.archiveProject} icon={<Archive size={15} />} danger onClick={() => { setMenuOpen(false); onArchive(project.id) }} />
+              }
             </div>
           )}
         </div>
@@ -293,6 +302,13 @@ export default function DashboardPage({ params }: { params: { locale: string } }
     await (supabase as any).from('projects').update({ archived: true }).eq('id', id)
     setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true } : p))
     showToast(t.archived)
+  }
+
+  async function unarchiveProject(id: string) {
+    if (!window.confirm(t.unarchiveConfirm)) return
+    await (supabase as any).from('projects').update({ archived: false }).eq('id', id)
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: false } : p))
+    showToast(t.unarchived)
   }
 
   const activeProjects = projects.filter(p => !(p as any).archived)
@@ -398,6 +414,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
                   t={t}
                   onNavigate={(id) => router.push(`/${locale}/app/project/${id}`)}
                   onArchive={archiveProject}
+                  onUnarchive={unarchiveProject}
                 />
               ))
             )}
