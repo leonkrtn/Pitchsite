@@ -14,6 +14,7 @@ const T = {
     title: 'Neues Projekt erstellen',
     sub: 'Lade dein Design hoch und erhalte einen einzigartigen Code für deinen Kunden.',
     step1: 'Projektdetails',
+    step1b: 'Kundeninfos (optional)',
     step2: 'Design hochladen',
     step3: 'Aktionen',
     nameLabel: 'Projektname',
@@ -23,6 +24,16 @@ const T = {
     dateLabel: 'Geplante Lieferung',
     descLabel: 'Beschreibung / Scope of Work',
     descPh: 'Was beinhaltet dieses Projekt? (wird im Vertrag verwendet)',
+    clientCompanyLabel: 'Firmenname',
+    clientCompanyPh: 'z.B. Weber & Partner GmbH',
+    clientContactLabel: 'Ansprechperson',
+    clientContactPh: 'z.B. Max Mustermann',
+    clientEmailLabel: 'E-Mail',
+    clientEmailPh: 'kunde@beispiel.de',
+    clientPhoneLabel: 'Telefon',
+    clientPhonePh: '+49 170 123456',
+    clientWebsiteLabel: 'Website',
+    clientWebsitePh: 'https://weber-partner.de',
     uploadCta: 'Klicke hier um dein Design auszuwählen',
     uploadSub: 'HTML-Datei oder ZIP-Archiv · Max. 50 MB',
     uploadBtn: 'Datei auswählen',
@@ -46,6 +57,7 @@ const T = {
     title: 'Create new project',
     sub: 'Upload your design and get a unique code for your client.',
     step1: 'Project details',
+    step1b: 'Client info (optional)',
     step2: 'Upload design',
     step3: 'Actions',
     nameLabel: 'Project name',
@@ -55,6 +67,16 @@ const T = {
     dateLabel: 'Planned delivery',
     descLabel: 'Description / Scope of work',
     descPh: 'What does this project include? (used in the contract)',
+    clientCompanyLabel: 'Company name',
+    clientCompanyPh: 'e.g. Weber & Partner Ltd.',
+    clientContactLabel: 'Contact person',
+    clientContactPh: 'e.g. John Smith',
+    clientEmailLabel: 'Email',
+    clientEmailPh: 'client@example.com',
+    clientPhoneLabel: 'Phone',
+    clientPhonePh: '+44 7700 900123',
+    clientWebsiteLabel: 'Website',
+    clientWebsitePh: 'https://weber-partner.com',
     uploadCta: 'Click here to select your design',
     uploadSub: 'HTML file or ZIP archive · Max. 50 MB',
     uploadBtn: 'Choose file',
@@ -89,6 +111,11 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState('')
   const [desc, setDesc] = useState('')
+  const [clientCompany, setClientCompany] = useState('')
+  const [clientContact, setClientContact] = useState('')
+  const [clientEmail, setClientEmail] = useState('')
+  const [clientPhone, setClientPhone] = useState('')
+  const [clientWebsite, setClientWebsite] = useState('')
   const [uploadState, setUploadState] = useState<'idle' | 'loading' | 'success'>('idle')
   const [progress, setProgress] = useState(0)
   const [fileName, setFileName] = useState('')
@@ -174,6 +201,11 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
         file_url: fileUrl,
         file_name: fileName,
         status: 'offen',
+        client_name: clientContact.trim() || null,
+        client_email: clientEmail.trim() || null,
+        client_phone: clientPhone.trim() || null,
+        client_company: clientCompany.trim() || null,
+        client_website: clientWebsite.trim() || null,
       })
       .select()
       .single() as { data: { id: string } | null; error: Error | null }
@@ -241,6 +273,47 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
           label={t.descLabel} placeholder={t.descPh}
           value={desc} onChange={e => setDesc(e.target.value)} rows={4}
         />
+
+        <div style={{ height: '8px' }} />
+        <div style={{
+          background: '#F8FAFC', border: '1px solid #E2E8F0',
+          borderRadius: '12px', padding: '24px', marginBottom: '8px',
+        }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '20px' }}>
+            {t.step1b}
+          </div>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <Input
+              label={t.clientCompanyLabel} placeholder={t.clientCompanyPh}
+              value={clientCompany} onChange={e => setClientCompany(e.target.value)}
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+            <Input
+              label={t.clientContactLabel} placeholder={t.clientContactPh}
+              value={clientContact} onChange={e => setClientContact(e.target.value)}
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+          </div>
+          <div style={{ height: '16px' }} />
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <Input
+              label={t.clientEmailLabel} type="email" placeholder={t.clientEmailPh}
+              value={clientEmail} onChange={e => setClientEmail(e.target.value)}
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+            <Input
+              label={t.clientPhoneLabel} type="tel" placeholder={t.clientPhonePh}
+              value={clientPhone} onChange={e => setClientPhone(e.target.value)}
+              style={{ flex: 1, marginBottom: 0 }}
+            />
+          </div>
+          <div style={{ height: '16px' }} />
+          <Input
+            label={t.clientWebsiteLabel} placeholder={t.clientWebsitePh}
+            value={clientWebsite} onChange={e => setClientWebsite(e.target.value)}
+            style={{ marginBottom: 0 }}
+          />
+        </div>
 
         <Divider style={{ margin: '32px 0' }} />
 

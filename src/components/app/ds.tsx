@@ -233,7 +233,7 @@ export function Badge({ status, locale = 'de' }: BadgeProps) {
   const labels: Record<ProjectStatus, { de: string; en: string }> = {
     offen:         { de: 'Offen',                      en: 'Open' },
     ausstehend:    { de: 'Ausstehend',                 en: 'Pending' },
-    escrow:        { de: 'In Escrow',                  en: 'In Escrow' },
+    escrow:        { de: 'In Bearbeitung',              en: 'In Progress' },
     abgeliefert:   { de: 'Abnahme ausstehend',         en: 'Awaiting approval' },
     abgeschlossen: { de: 'Abgeschlossen',              en: 'Completed' },
   }

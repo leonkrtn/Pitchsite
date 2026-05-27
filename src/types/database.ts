@@ -28,6 +28,9 @@ export interface Database {
           file_name: string | null
           client_name: string | null
           client_email: string | null
+          client_phone: string | null
+          client_company: string | null
+          client_website: string | null
           created_at: string
           delivered_at: string | null
           client_user_id: string | null
@@ -45,6 +48,9 @@ export interface Database {
           file_name?: string | null
           client_name?: string | null
           client_email?: string | null
+          client_phone?: string | null
+          client_company?: string | null
+          client_website?: string | null
         }
         Update: {
           name?: string
@@ -56,6 +62,9 @@ export interface Database {
           file_name?: string | null
           client_name?: string | null
           client_email?: string | null
+          client_phone?: string | null
+          client_company?: string | null
+          client_website?: string | null
         }
       }
       project_pins: {
