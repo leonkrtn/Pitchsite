@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Share2, Eye, Copy, Send, Archive, AlertCircle, Check } from 'lucide-react'
+import { Share2, Eye, Copy, Send, Archive, AlertCircle, Check, KeyRound } from 'lucide-react'
 import { Button, Badge, Card, Divider } from '@/components/app/ds'
 import { DashboardLayout } from '@/components/app/AppSidebar'
 import { createBrowserClient } from '@/lib/supabase'
@@ -47,6 +47,17 @@ const T = {
     loading: 'Laden…',
     notFound: 'Projekt nicht gefunden',
     linkCopied: 'Link kopiert!',
+    pitchPwTitle: 'Pitch-Passwort',
+    pitchPwLabel: 'Passwort',
+    pitchPwPh: 'z. B. Sommer2024',
+    pitchPwSave: 'Speichern',
+    pitchPwReset: 'Passwort zurücksetzen',
+    pitchPwResetConfirm: 'Kunde wird aufgefordert, ein neues Passwort zu setzen. Fortfahren?',
+    pitchPwSaved: 'Passwort gespeichert',
+    pitchPwResetDone: 'Zurückgesetzt — Kunde muss neues Passwort setzen',
+    pitchPwNone: 'Kein Passwort gesetzt',
+    pitchPwChanged: 'Kunde hat eigenes Passwort gesetzt',
+    pitchPwNotChanged: 'Erstzugang noch aktiv',
   },
   en: {
     breadcrumb: 'Dashboard',
@@ -82,6 +93,17 @@ const T = {
     loading: 'Loading…',
     notFound: 'Project not found',
     linkCopied: 'Link copied!',
+    pitchPwTitle: 'Pitch password',
+    pitchPwLabel: 'Password',
+    pitchPwPh: 'e.g. Summer2024',
+    pitchPwSave: 'Save',
+    pitchPwReset: 'Reset password',
+    pitchPwResetConfirm: 'Client will be asked to set a new password. Continue?',
+    pitchPwSaved: 'Password saved',
+    pitchPwResetDone: 'Reset — client must set a new password',
+    pitchPwNone: 'No password set',
+    pitchPwChanged: 'Client has set their own password',
+    pitchPwNotChanged: 'Initial access still active',
   },
 }
 
@@ -126,6 +148,8 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
   const [pins, setPins] = useState<Pin[]>([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState('')
+  const [pitchPwInput, setPitchPwInput] = useState('')
+  const [pitchPwSaving, setPitchPwSaving] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -163,6 +187,24 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
     if (!project) return
     navigator.clipboard.writeText(`${window.location.origin}/${locale}/app/pitch/${project.code}`)
     showToast(t.linkCopied)
+  }
+
+  const savePitchPassword = async () => {
+    if (!project || !pitchPwInput.trim()) return
+    setPitchPwSaving(true)
+    await (supabase as any).from('projects').update({ pitch_password: pitchPwInput.trim(), pitch_password_changed: false }).eq('id', project.id)
+    setProject(prev => prev ? { ...prev, pitch_password: pitchPwInput.trim(), pitch_password_changed: false } as any : prev)
+    setPitchPwSaving(false)
+    setPitchPwInput('')
+    showToast(t.pitchPwSaved)
+  }
+
+  const resetPitchPassword = async () => {
+    if (!project) return
+    if (!window.confirm(t.pitchPwResetConfirm)) return
+    await (supabase as any).from('projects').update({ pitch_password_changed: false }).eq('id', project.id)
+    setProject(prev => prev ? { ...prev, pitch_password_changed: false } as any : prev)
+    showToast(t.pitchPwResetDone)
   }
 
   if (loading) {
@@ -410,6 +452,48 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
                   </Button>
                 )}
               </div>
+            </Card>
+
+            {/* Pitch password card */}
+            <Card style={{ padding: '24px 28px', marginTop: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <KeyRound size={15} color="#64748B" />
+                <span style={{ fontSize: '15px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>
+                  {t.pitchPwTitle}
+                </span>
+              </div>
+              {/* Status line */}
+              <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', marginBottom: '16px' }}>
+                {!(project as any).pitch_password ? (
+                  <span style={{ color: '#94A3B8' }}>{t.pitchPwNone}</span>
+                ) : (project as any).pitch_password_changed ? (
+                  <span style={{ color: '#16A34A' }}>✓ {t.pitchPwChanged}</span>
+                ) : (
+                  <span style={{ color: '#D97706' }}>⚠ {t.pitchPwNotChanged}</span>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                <input
+                  value={pitchPwInput}
+                  onChange={e => setPitchPwInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && savePitchPassword()}
+                  placeholder={t.pitchPwPh}
+                  type="text"
+                  style={{
+                    flex: 1, height: '38px', border: '1.5px solid #E2E8F0', borderRadius: '8px',
+                    padding: '0 12px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#0F172A',
+                    outline: 'none', background: '#fff',
+                  }}
+                />
+                <Button variant="primary" size="sm" loading={pitchPwSaving} disabled={!pitchPwInput.trim()} onClick={savePitchPassword} style={{ height: '38px', flexShrink: 0 }}>
+                  {t.pitchPwSave}
+                </Button>
+              </div>
+              {(project as any).pitch_password && (
+                <Button variant="ghost" size="sm" fullWidth onClick={resetPitchPassword} style={{ fontSize: '12px', color: '#64748B' }}>
+                  {t.pitchPwReset}
+                </Button>
+              )}
             </Card>
           </div>
         </div>

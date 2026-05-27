@@ -35,6 +35,8 @@ export interface Database {
           delivered_at: string | null
           client_user_id: string | null
           archived: boolean
+          pitch_password: string | null
+          pitch_password_changed: boolean
         }
         Insert: {
           designer_id: string

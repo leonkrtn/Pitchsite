@@ -320,68 +320,75 @@ export default function LoginPage({ params }: { params: { locale: string } }) {
               ))}
             </div>
 
-            {/* Login form */}
-            {tab === 'login' && (
-              <>
-                <h2 style={{ fontSize: '22px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '20px' }}>
-                  {tr.loginHeadline}
-                </h2>
-                {loginError && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px' }}>
-                    <AlertCircle size={16} color="#DC2626" />
-                    <span style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#991B1B' }}>{loginError}</span>
-                  </div>
-                )}
-                <Input label={tr.email} type="email" placeholder={tr.emailPh} value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
-                <Input label={tr.password} type="password" placeholder={tr.passwordPh} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} autoComplete="current-password" />
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', marginTop: '-8px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>
-                    <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ accentColor: '#1D4ED8' }} />
-                    {tr.remember}
-                  </label>
-                  <span style={{ fontSize: '14px', color: '#1D4ED8', fontFamily: 'Inter, sans-serif', cursor: 'pointer', textDecoration: 'underline' }}>
-                    {tr.forgot}
-                  </span>
-                </div>
-                <Button variant="primary" fullWidth loading={loginLoading} onClick={handleLogin} style={{ height: '48px', fontSize: '16px' }} disabled={!email || !password}>
-                  {tr.loginSubmit}
-                </Button>
-              </>
-            )}
-
-            {/* Signup form */}
-            {tab === 'signup' && (
-              <>
-                <h2 style={{ fontSize: '22px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '20px' }}>
-                  {tr.signupHeadline}
-                </h2>
-                {signupError && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px' }}>
-                    <AlertCircle size={16} color="#DC2626" />
-                    <span style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#991B1B' }}>{signupError}</span>
-                  </div>
-                )}
-                <Input label={tr.name} placeholder={tr.namePh} value={suName} onChange={e => setSuName(e.target.value)} autoComplete="name" />
-                <Input label={tr.email} type="email" placeholder={tr.emailPh} value={suEmail} onChange={e => setSuEmail(e.target.value)} autoComplete="email" />
-                <Input label={tr.newPassword} type="password" placeholder={tr.newPasswordPh} value={suPw} onChange={e => setSuPw(e.target.value)} autoComplete="new-password" />
-                {suPw && (
-                  <div style={{ margin: '-12px 0 20px' }}>
-                    <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
-                      {[1, 2, 3, 4].map(i => (
-                        <div key={i} style={{ flex: 1, height: '3px', borderRadius: '2px', background: i <= pwStrength ? pwColors[pwStrength] : '#E2E8F0', transition: 'background 200ms' }} />
-                      ))}
+            {/* Forms — both always mounted, height animated via CSS grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateRows: tab === 'login' ? '1fr 0fr' : '0fr 1fr',
+              transition: 'grid-template-rows 260ms ease',
+            }}>
+              {/* Login form */}
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ pointerEvents: tab === 'login' ? 'auto' : 'none' }}>
+                  <h2 style={{ fontSize: '22px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '20px' }}>
+                    {tr.loginHeadline}
+                  </h2>
+                  {loginError && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px' }}>
+                      <AlertCircle size={16} color="#DC2626" />
+                      <span style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#991B1B' }}>{loginError}</span>
                     </div>
-                    {tr.pwLabels[pwStrength] && (
-                      <span style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: pwColors[pwStrength] }}>{tr.pwLabels[pwStrength]}</span>
-                    )}
+                  )}
+                  <Input label={tr.email} type="email" placeholder={tr.emailPh} value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" />
+                  <Input label={tr.password} type="password" placeholder={tr.passwordPh} value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} autoComplete="current-password" />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', marginTop: '-8px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>
+                      <input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} style={{ accentColor: '#1D4ED8' }} />
+                      {tr.remember}
+                    </label>
+                    <span style={{ fontSize: '14px', color: '#1D4ED8', fontFamily: 'Inter, sans-serif', cursor: 'pointer', textDecoration: 'underline' }}>
+                      {tr.forgot}
+                    </span>
                   </div>
-                )}
-                <Input label={tr.password2} type="password" placeholder={tr.password2Ph} value={suPw2} onChange={e => setSuPw2(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignup()} autoComplete="new-password" />
-                <Button variant="primary" fullWidth loading={signupLoading} onClick={handleSignup} style={{ height: '48px', fontSize: '16px' }} disabled={!suName || !suEmail || !suPw || !suPw2}>
-                  {tr.signupSubmit}
-                </Button>
-              </>
-            )}
+                  <Button variant="primary" fullWidth loading={loginLoading} onClick={handleLogin} style={{ height: '48px', fontSize: '16px' }} disabled={!email || !password}>
+                    {tr.loginSubmit}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Signup form */}
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ pointerEvents: tab === 'signup' ? 'auto' : 'none' }}>
+                  <h2 style={{ fontSize: '22px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '20px' }}>
+                    {tr.signupHeadline}
+                  </h2>
+                  {signupError && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px' }}>
+                      <AlertCircle size={16} color="#DC2626" />
+                      <span style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#991B1B' }}>{signupError}</span>
+                    </div>
+                  )}
+                  <Input label={tr.name} placeholder={tr.namePh} value={suName} onChange={e => setSuName(e.target.value)} autoComplete="name" />
+                  <Input label={tr.email} type="email" placeholder={tr.emailPh} value={suEmail} onChange={e => setSuEmail(e.target.value)} autoComplete="email" />
+                  <Input label={tr.newPassword} type="password" placeholder={tr.newPasswordPh} value={suPw} onChange={e => setSuPw(e.target.value)} autoComplete="new-password" />
+                  {suPw && (
+                    <div style={{ margin: '-12px 0 20px' }}>
+                      <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                        {[1, 2, 3, 4].map(i => (
+                          <div key={i} style={{ flex: 1, height: '3px', borderRadius: '2px', background: i <= pwStrength ? pwColors[pwStrength] : '#E2E8F0', transition: 'background 200ms' }} />
+                        ))}
+                      </div>
+                      {tr.pwLabels[pwStrength] && (
+                        <span style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: pwColors[pwStrength] }}>{tr.pwLabels[pwStrength]}</span>
+                      )}
+                    </div>
+                  )}
+                  <Input label={tr.password2} type="password" placeholder={tr.password2Ph} value={suPw2} onChange={e => setSuPw2(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSignup()} autoComplete="new-password" />
+                  <Button variant="primary" fullWidth loading={signupLoading} onClick={handleSignup} style={{ height: '48px', fontSize: '16px' }} disabled={!suName || !suEmail || !suPw || !suPw2}>
+                    {tr.signupSubmit}
+                  </Button>
+                </div>
+              </div>
+            </div>
 
             <OrDivider label={locale === 'en' ? 'or' : 'oder'} />
             <GoogleButton label={tr.google} onDemoClick={() => showToast(tr.googleSoon)} />

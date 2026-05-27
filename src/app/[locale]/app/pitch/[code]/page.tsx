@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { MessageCircle, ZoomIn, ZoomOut, X, MousePointer, LogIn, UserPlus } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { MessageCircle, ZoomIn, ZoomOut, X, MousePointer, LogIn, UserPlus, KeyRound } from 'lucide-react'
 import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
@@ -70,6 +70,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const { locale, code } = params
   const t = T[locale as 'de' | 'en'] ?? T.de
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createBrowserClient()
 
   const [project, setProject] = useState<Project | null>(null)
@@ -86,6 +87,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<'comment' | 'accept' | null>(null)
+  const [showSetupPw, setShowSetupPw] = useState(false)
   const frameRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -138,6 +140,10 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       setPins(pinData ?? [])
       setLoading(false)
+
+      if (searchParams.get('setup') === '1') {
+        setShowSetupPw(true)
+      }
     }
     load()
   }, [code])
@@ -229,6 +235,18 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
           t={t}
           onClose={() => { setShowAuthModal(false); setPendingAction(null) }}
           onSuccess={handleAuthSuccess}
+        />
+      )}
+
+      {/* First-time password setup modal */}
+      {showSetupPw && (
+        <SetupPasswordModal
+          locale={locale}
+          code={code}
+          onDone={() => {
+            setShowSetupPw(false)
+            router.replace(`/${locale}/app/pitch/${code}`)
+          }}
         />
       )}
 
@@ -377,6 +395,66 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
           onPinClick={id => { setActivePin(id); setSidebarOpen(false) }}
         />
       )}
+    </div>
+  )
+}
+
+// ── SETUP PASSWORD MODAL ─────────────────────────────────
+
+function SetupPasswordModal({ locale, code, onDone }: { locale: string; code: string; onDone: () => void }) {
+  const supabase = createBrowserClient()
+  const [pw, setPw] = useState('')
+  const [pw2, setPw2] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const isDE = locale !== 'en'
+  const labels = {
+    title: isDE ? 'Persönliches Passwort festlegen' : 'Set your personal password',
+    sub: isDE
+      ? 'Dein Designer hat dir ein Einmalpasswort geschickt. Lege jetzt dein eigenes fest — nur du kennst es danach.'
+      : 'Your designer sent you a one-time password. Set your own now — only you will know it.',
+    pw1: isDE ? 'Neues Passwort' : 'New password',
+    pw2: isDE ? 'Passwort bestätigen' : 'Confirm password',
+    cta: isDE ? 'Passwort speichern' : 'Save password',
+    errShort: isDE ? 'Mindestens 4 Zeichen.' : 'At least 4 characters.',
+    errMismatch: isDE ? 'Passwörter stimmen nicht überein.' : 'Passwords do not match.',
+  }
+
+  const handleSubmit = async () => {
+    if (pw.length < 4) { setError(labels.errShort); return }
+    if (pw !== pw2) { setError(labels.errMismatch); return }
+    setLoading(true)
+    await (supabase as any).from('projects')
+      .update({ pitch_password: pw, pitch_password_changed: true })
+      .eq('code', code)
+    setLoading(false)
+    onDone()
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.65)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '420px', padding: '36px', boxShadow: '0 32px 80px rgba(0,0,0,.3)', animation: 'dropIn 200ms ease-out' }}>
+        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+          <KeyRound size={22} color="#1D4ED8" />
+        </div>
+        <h2 style={{ fontSize: '20px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '8px' }}>
+          {labels.title}
+        </h2>
+        <p style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B', marginBottom: '28px', lineHeight: 1.6 }}>
+          {labels.sub}
+        </p>
+        {error && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', padding: '10px 14px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px' }}>
+            <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#DC2626' }}>{error}</span>
+          </div>
+        )}
+        <Input label={labels.pw1} type="password" placeholder="••••••••" value={pw} onChange={e => { setPw(e.target.value); setError('') }} autoFocus />
+        <Input label={labels.pw2} type="password" placeholder="••••••••" value={pw2} onChange={e => { setPw2(e.target.value); setError('') }} onKeyDown={e => e.key === 'Enter' && handleSubmit()} />
+        <Button variant="primary" fullWidth loading={loading} onClick={handleSubmit} style={{ height: '48px', fontSize: '15px' }} disabled={!pw || !pw2}>
+          {labels.cta}
+        </Button>
+      </div>
     </div>
   )
 }
