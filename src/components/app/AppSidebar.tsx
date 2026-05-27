@@ -3,7 +3,7 @@
 import { useState, ReactNode, CSSProperties } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import {
-  LayoutDashboard, FolderOpen, MessageSquare, BarChart2,
+  LayoutDashboard, BarChart2,
   Settings, HelpCircle,
 } from 'lucide-react'
 import { NavbarDashboard } from './AppNavbar'
@@ -61,14 +61,12 @@ export function AppSidebar({ locale, activeSection = 'dashboard' }: SidebarProps
   const router = useRouter()
 
   const mainItems = [
-    { icon: <LayoutDashboard size={18} />, label: locale === 'en' ? 'Overview' : 'Übersicht', key: 'dashboard' },
-    { icon: <FolderOpen size={18} />, label: locale === 'en' ? 'Projects' : 'Projekte', key: 'projects' },
-    { icon: <MessageSquare size={18} />, label: locale === 'en' ? 'Feedback' : 'Feedback', key: 'feedback' },
-    { icon: <BarChart2 size={18} />, label: locale === 'en' ? 'Revenue' : 'Einnahmen', key: 'revenue' },
+    { icon: <LayoutDashboard size={18} />, label: locale === 'en' ? 'Overview' : 'Übersicht', key: 'dashboard', path: `/${locale}/app/dashboard` },
+    { icon: <BarChart2 size={18} />, label: locale === 'en' ? 'Statistics' : 'Statistiken', key: 'statistics', path: `/${locale}/app/statistics` },
   ]
   const accountItems = [
-    { icon: <Settings size={18} />, label: locale === 'en' ? 'Settings' : 'Einstellungen', key: 'settings' },
-    { icon: <HelpCircle size={18} />, label: locale === 'en' ? 'Help' : 'Hilfe', key: 'help' },
+    { icon: <Settings size={18} />, label: locale === 'en' ? 'Settings' : 'Einstellungen', key: 'settings', path: `/${locale}/app/settings` },
+    { icon: <HelpCircle size={18} />, label: locale === 'en' ? 'Help' : 'Hilfe', key: 'help', path: `/${locale}/app/help` },
   ]
 
   return (
@@ -86,13 +84,19 @@ export function AppSidebar({ locale, activeSection = 'dashboard' }: SidebarProps
             icon={item.icon}
             label={item.label}
             active={activeSection === item.key}
-            onClick={() => router.push(`/${locale}/app/dashboard`)}
+            onClick={() => router.push(item.path)}
           />
         ))}
         <Divider style={{ margin: '16px 24px', width: 'calc(100% - 48px)' }} />
         <SectionLabel>{locale === 'en' ? 'Account' : 'Konto'}</SectionLabel>
         {accountItems.map(item => (
-          <SidebarItem key={item.key} icon={item.icon} label={item.label} active={false} onClick={() => {}} />
+          <SidebarItem
+            key={item.key}
+            icon={item.icon}
+            label={item.label}
+            active={activeSection === item.key}
+            onClick={() => router.push(item.path)}
+          />
         ))}
       </div>
 

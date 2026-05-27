@@ -96,6 +96,46 @@ export interface Database {
         Insert: { email: string; name: string; locale: string }
         Update: Record<string, never>
       }
+      user_settings: {
+        Row: {
+          id: string
+          user_id: string
+          notify_comments: boolean
+          notify_payments: boolean
+          notify_weekly: boolean
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          notify_comments?: boolean
+          notify_payments?: boolean
+          notify_weekly?: boolean
+        }
+        Update: {
+          notify_comments?: boolean
+          notify_payments?: boolean
+          notify_weekly?: boolean
+        }
+      }
+      support_messages: {
+        Row: {
+          id: string
+          user_id: string | null
+          name: string
+          email: string
+          subject: string
+          message: string
+          created_at: string
+        }
+        Insert: {
+          user_id?: string | null
+          name: string
+          email: string
+          subject: string
+          message: string
+        }
+        Update: Record<string, never>
+      }
     }
   }
 }
