@@ -34,6 +34,10 @@ const T = {
     copyLink: 'Link kopieren',
     editProject: 'Projekt bearbeiten',
     archiveProject: 'Projekt archivieren',
+    archiveConfirm: 'Projekt wirklich archivieren? Es wird aus der Übersicht entfernt.',
+    archived: 'Archiviert',
+    showArchived: 'Archivierte anzeigen',
+    hideArchived: 'Archivierte ausblenden',
   },
   en: {
     title: 'Overview',
@@ -51,6 +55,10 @@ const T = {
     copyLink: 'Copy link',
     editProject: 'Edit project',
     archiveProject: 'Archive project',
+    archiveConfirm: 'Archive this project? It will be removed from the overview.',
+    archived: 'Archived',
+    showArchived: 'Show archived',
+    hideArchived: 'Hide archived',
   },
 }
 
@@ -125,8 +133,8 @@ function FilterTabs({ active, setActive, tabs }: { active: string; setActive: (t
 
 // ── PROJECT CARD ──────────────────────────────────────────
 
-function ProjectCard({ project, idx, locale, t, onNavigate }: {
-  project: Project; idx: number; locale: string; t: typeof T.de; onNavigate: (id: string) => void
+function ProjectCard({ project, idx, locale, t, onNavigate, onArchive }: {
+  project: Project; idx: number; locale: string; t: typeof T.de; onNavigate: (id: string) => void; onArchive: (id: string) => void
 }) {
   const [hov, setHov] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -223,7 +231,7 @@ function ProjectCard({ project, idx, locale, t, onNavigate }: {
               <ContextMenuItem label={t.copyLink} icon={<Link size={15} />} onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/${locale}/app/pitch/${project.code}`); setMenuOpen(false) }} />
               <ContextMenuItem label={t.editProject} icon={<FileText size={15} />} onClick={() => setMenuOpen(false)} />
               <Divider style={{ margin: '4px 0' }} />
-              <ContextMenuItem label={t.archiveProject} icon={<Archive size={15} />} danger onClick={() => setMenuOpen(false)} />
+              <ContextMenuItem label={t.archiveProject} icon={<Archive size={15} />} danger onClick={() => { setMenuOpen(false); onArchive(project.id) }} />
             </div>
           )}
         </div>
@@ -247,6 +255,10 @@ export default function DashboardPage({ params }: { params: { locale: string } }
   const [userName, setUserName] = useState('')
   const [userInitials, setUserInitials] = useState('PS')
   const [loading, setLoading] = useState(true)
+  const [showArchived, setShowArchived] = useState(false)
+  const [toast, setToast] = useState('')
+
+  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500) }
 
   useEffect(() => {
     async function load() {
@@ -276,7 +288,17 @@ export default function DashboardPage({ params }: { params: { locale: string } }
     load()
   }, [])
 
-  const filtered = projects.filter(p => {
+  async function archiveProject(id: string) {
+    if (!window.confirm(t.archiveConfirm)) return
+    await (supabase as any).from('projects').update({ archived: true }).eq('id', id)
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, archived: true } : p))
+    showToast(t.archived)
+  }
+
+  const activeProjects = projects.filter(p => !(p as any).archived)
+  const archivedProjects = projects.filter(p => (p as any).archived)
+
+  const filtered = (showArchived ? archivedProjects : activeProjects).filter(p => {
     if (filter === t.filters[0]) return true
     if (filter === t.filters[1]) return p.status === 'offen'
     if (filter === t.filters[2]) return p.status === 'escrow' || p.status === 'abgeliefert'
@@ -284,14 +306,17 @@ export default function DashboardPage({ params }: { params: { locale: string } }
     return true
   })
 
-  const activeCount = projects.filter(p => p.status !== 'abgeschlossen').length
-  const escrowTotal = projects.filter(p => p.status === 'escrow').reduce((s, p) => s + (p.amount ?? 0), 0)
-  const paidTotal = projects.filter(p => p.status === 'abgeschlossen').reduce((s, p) => s + (p.amount ?? 0), 0)
+  const activeCount = activeProjects.filter(p => p.status !== 'abgeschlossen').length
+  const escrowTotal = activeProjects.filter(p => p.status === 'escrow' || p.status === 'abgeliefert').reduce((s, p) => s + (p.amount ?? 0), 0)
+  const paidTotal = activeProjects.filter(p => p.status === 'abgeschlossen').reduce((s, p) => s + (p.amount ?? 0), 0)
 
   const firstName = userName.split(' ')[0] || 'Designer'
 
   return (
     <DashboardLayout locale={locale} activeSection="dashboard" userName={userName} userInitials={userInitials}>
+      {toast && (
+        <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: '#0F172A', color: '#fff', padding: '12px 20px', borderRadius: '8px', fontSize: '14px', fontFamily: 'Inter, sans-serif', zIndex: 100, boxShadow: '0 8px 24px rgba(0,0,0,.2)', animation: 'fadeInUp 200ms ease-out', whiteSpace: 'nowrap' }}>{toast}</div>
+      )}
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
@@ -322,10 +347,20 @@ export default function DashboardPage({ params }: { params: { locale: string } }
       {/* Projects */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>
-            {t.projects}
-          </h2>
-          {!isMobile && <FilterTabs active={filter} setActive={setFilter} tabs={t.filters} />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>
+              {showArchived ? t.archived : t.projects}
+            </h2>
+            {archivedProjects.length > 0 && (
+              <button
+                onClick={() => setShowArchived(v => !v)}
+                style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#64748B', background: '#F1F5F9', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
+              >
+                {showArchived ? t.hideArchived : `${t.showArchived} (${archivedProjects.length})`}
+              </button>
+            )}
+          </div>
+          {!isMobile && !showArchived && <FilterTabs active={filter} setActive={setFilter} tabs={t.filters} />}
         </div>
 
         {isMobile && (
@@ -362,6 +397,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
                   locale={locale}
                   t={t}
                   onNavigate={(id) => router.push(`/${locale}/app/project/${id}`)}
+                  onArchive={archiveProject}
                 />
               ))
             )}

@@ -38,6 +38,7 @@ const T = {
     copyLink: 'Pitch-Link kopieren',
     remind: 'Erinnerung senden',
     archive: 'Projekt archivieren',
+    archiveConfirm: 'Projekt wirklich archivieren? Es wird aus der Übersicht entfernt.',
     createdAt: (d: string) => `Erstellt am ${d}`,
     noComments: 'Noch keine Kommentare',
     noCommentsSub: 'Wenn dein Kunde das Design betrachtet, erscheinen Pins hier.',
@@ -70,6 +71,7 @@ const T = {
     copyLink: 'Copy pitch link',
     remind: 'Send reminder',
     archive: 'Archive project',
+    archiveConfirm: 'Archive this project? It will be removed from the overview.',
     createdAt: (d: string) => `Created on ${d}`,
     noComments: 'No comments yet',
     noCommentsSub: 'When your client views the design, pins will appear here.',
@@ -376,7 +378,16 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
                 <Button variant="secondary" icon={<Send size={16} />} fullWidth>
                   {t.remind}
                 </Button>
-                <Button variant="ghost-danger" icon={<Archive size={16} />} fullWidth>
+                <Button
+                  variant="ghost-danger"
+                  icon={<Archive size={16} />}
+                  fullWidth
+                  onClick={async () => {
+                    if (!window.confirm(t.archiveConfirm)) return
+                    await (supabase as any).from('projects').update({ archived: true }).eq('id', project.id)
+                    router.push(`/${locale}/app/dashboard`)
+                  }}
+                >
                   {t.archive}
                 </Button>
               </div>

@@ -31,6 +31,7 @@ export interface Database {
           created_at: string
           delivered_at: string | null
           client_user_id: string | null
+          archived: boolean
         }
         Insert: {
           designer_id: string
