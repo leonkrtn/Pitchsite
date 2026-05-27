@@ -1,4 +1,4 @@
-export type ProjectStatus = 'offen' | 'ausstehend' | 'escrow' | 'abgeschlossen'
+export type ProjectStatus = 'offen' | 'ausstehend' | 'escrow' | 'abgeliefert' | 'abgeschlossen'
 
 export interface Database {
   public: {

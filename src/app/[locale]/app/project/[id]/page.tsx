@@ -82,10 +82,11 @@ const T = {
 type StepStatus = 'done' | 'active' | 'open'
 
 function getTimelineStatuses(status: string): StepStatus[] {
-  if (status === 'offen')         return ['open', 'open', 'active', 'open', 'open']
-  if (status === 'ausstehend')    return ['done', 'done', 'active', 'open', 'open']
-  if (status === 'escrow')        return ['done', 'done', 'active', 'open', 'open']
-  if (status === 'abgeschlossen') return ['done', 'done', 'done', 'done', 'done']
+  if (status === 'offen')         return ['open',   'open',   'active', 'open',   'open']
+  if (status === 'ausstehend')    return ['done',   'done',   'active', 'open',   'open']
+  if (status === 'escrow')        return ['done',   'done',   'active', 'open',   'open']
+  if (status === 'abgeliefert')   return ['done',   'done',   'done',   'active', 'open']
+  if (status === 'abgeschlossen') return ['done',   'done',   'done',   'done',   'done']
   return ['open', 'open', 'open', 'open', 'open']
 }
 

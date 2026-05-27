@@ -222,7 +222,7 @@ export function Textarea({ label, placeholder, value, onChange, rows = 4, style 
 
 // ── BADGE ─────────────────────────────────────────────────
 
-type ProjectStatus = 'offen' | 'ausstehend' | 'escrow' | 'abgeschlossen'
+type ProjectStatus = 'offen' | 'ausstehend' | 'escrow' | 'abgeliefert' | 'abgeschlossen'
 
 interface BadgeProps {
   status: ProjectStatus
@@ -231,15 +231,17 @@ interface BadgeProps {
 
 export function Badge({ status, locale = 'de' }: BadgeProps) {
   const labels: Record<ProjectStatus, { de: string; en: string }> = {
-    offen:         { de: 'Offen',          en: 'Open' },
-    ausstehend:    { de: 'Ausstehend',     en: 'Pending' },
-    escrow:        { de: 'In Escrow',      en: 'In Escrow' },
-    abgeschlossen: { de: 'Abgeschlossen',  en: 'Completed' },
+    offen:         { de: 'Offen',                      en: 'Open' },
+    ausstehend:    { de: 'Ausstehend',                 en: 'Pending' },
+    escrow:        { de: 'In Escrow',                  en: 'In Escrow' },
+    abgeliefert:   { de: 'Abnahme ausstehend',         en: 'Awaiting approval' },
+    abgeschlossen: { de: 'Abgeschlossen',              en: 'Completed' },
   }
   const cfgs: Record<ProjectStatus, { bg: string; text: string; dot: string }> = {
     offen:         { bg: '#F1F5F9', text: '#475569', dot: '#94A3B8' },
     ausstehend:    { bg: '#FFFBEB', text: '#92400E', dot: '#D97706' },
     escrow:        { bg: '#EFF6FF', text: '#1E40AF', dot: '#3B82F6' },
+    abgeliefert:   { bg: '#F0FDFA', text: '#0F766E', dot: '#14B8A6' },
     abgeschlossen: { bg: '#F0FDF4', text: '#166534', dot: '#22C55E' },
   }
   const c = cfgs[status] || cfgs.offen

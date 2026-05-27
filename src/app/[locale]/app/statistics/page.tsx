@@ -62,6 +62,7 @@ const STATUS_COLORS: Record<string, string> = {
   offen: '#3B82F6',
   ausstehend: '#F59E0B',
   escrow: '#8B5CF6',
+  abgeliefert: '#14B8A6',
   abgeschlossen: '#10B981',
 }
 
@@ -228,7 +229,7 @@ export default function StatisticsPage({ params }: { params: { locale: string } 
   })
 
   // Status distribution
-  const statusGroups = ['offen', 'ausstehend', 'escrow', 'abgeschlossen'].map(status => ({
+  const statusGroups = ['offen', 'ausstehend', 'escrow', 'abgeliefert', 'abgeschlossen'].map(status => ({
     name: t.status[status as keyof typeof t.status],
     value: projects.filter(p => p.status === status).length,
     color: STATUS_COLORS[status],

@@ -279,7 +279,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
   const filtered = projects.filter(p => {
     if (filter === t.filters[0]) return true
     if (filter === t.filters[1]) return p.status === 'offen'
-    if (filter === t.filters[2]) return p.status === 'escrow'
+    if (filter === t.filters[2]) return p.status === 'escrow' || p.status === 'abgeliefert'
     if (filter === t.filters[3]) return p.status === 'abgeschlossen'
     return true
   })
