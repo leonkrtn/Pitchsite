@@ -64,7 +64,23 @@ export function NavbarDashboard({ locale, userName, userInitials = 'PS' }: Navba
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 32px',
     }}>
-      <AppLogo href={`/${locale}/app/dashboard`} />
+      <div
+        onClick={() => router.push(`/${locale}/app/dashboard`)}
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+      >
+        <span style={{
+          fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+          fontWeight: 700, fontSize: '18px', letterSpacing: '-0.02em', color: '#0F172A',
+        }}>
+          Pitchsite
+        </span>
+        <div style={{ width: '1px', height: '16px', background: '#E2E8F0' }} />
+        <span style={{
+          fontSize: '14px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A',
+        }}>
+          Dashboard
+        </span>
+      </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '0' }}>
         <LanguageToggle />
