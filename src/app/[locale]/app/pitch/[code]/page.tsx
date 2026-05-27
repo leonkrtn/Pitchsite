@@ -340,8 +340,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
       </div>
 
       {/* Viewport */}
-      <div style={{ flex: 1, overflow: 'auto', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', position: 'relative' }}>
-        <div style={{ padding: '40px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'auto' }}>
           <div
             ref={frameRef}
             onClick={handleFrameClick}
@@ -353,6 +353,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               cursor: commentMode ? 'crosshair' : 'default',
               flexShrink: 0,
               overflow: 'hidden',
+              alignSelf: 'stretch',
             }}
           >
             {/* Iframe showing uploaded design */}
@@ -361,16 +362,16 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 <iframe
                   src={blobSrc}
                   sandbox="allow-same-origin allow-scripts"
-                  style={{ width: '1280px', height: '900px', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
+                  style={{ width: '1280px', height: '100%', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
                   title={project.name}
                 />
               ) : (
-                <div style={{ width: '1280px', height: '900px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
                   Lädt…
                 </div>
               )
             ) : (
-              <div style={{ width: '1280px', height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+              <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
                 No design file uploaded
               </div>
             )}

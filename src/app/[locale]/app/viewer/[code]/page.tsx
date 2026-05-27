@@ -325,30 +325,31 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
       </div>
 
       {/* Design viewport */}
-      <div style={{ flex: 1, overflow: 'auto', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px' }}>
-        <div style={{ padding: '40px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'auto' }}>
           <div style={{
             width: `${1280 * zoom / 100}px`,
             background: '#fff',
             boxShadow: '0 20px 80px rgba(0,0,0,.4)',
             position: 'relative',
             flexShrink: 0,
+            alignSelf: 'stretch',
           }}>
             {project.file_url ? (
               blobSrc ? (
                 <iframe
                   src={blobSrc}
                   sandbox="allow-same-origin allow-scripts"
-                  style={{ width: '1280px', height: '900px', border: 'none', display: 'block' }}
+                  style={{ width: '1280px', height: '100%', border: 'none', display: 'block' }}
                   title={project.name}
                 />
               ) : (
-                <div style={{ width: '1280px', height: '900px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
                   Lädt…
                 </div>
               )
             ) : (
-              <div style={{ width: '1280px', height: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+              <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
                 <Upload size={40} color="#CBD5E1" />
                 <span style={{ fontSize: '15px' }}>{t.noFile}</span>
                 <Button variant="primary" icon={<Upload size={16} />} onClick={() => fileInputRef.current?.click()}>
