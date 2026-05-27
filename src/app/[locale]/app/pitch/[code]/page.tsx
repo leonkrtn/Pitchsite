@@ -6,6 +6,7 @@ import { MessageCircle, ZoomIn, ZoomOut, X, MousePointer, LogIn, UserPlus, KeyRo
 import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
+import { fetchAndRenderDesign } from '@/lib/renderDesign'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
@@ -88,6 +89,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [pendingAction, setPendingAction] = useState<'comment' | 'accept' | null>(null)
   const [showSetupPw, setShowSetupPw] = useState(false)
+  const [blobSrc, setBlobSrc] = useState<string | null>(null)
   const frameRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -147,6 +149,17 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     }
     load()
   }, [code])
+
+  useEffect(() => {
+    if (!project?.file_url || !project?.file_name) return
+    let revoke: (() => void) | null = null
+    setBlobSrc(null)
+    fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
+      setBlobSrc(src)
+      revoke = rv
+    }).catch(() => setBlobSrc(project.file_url))
+    return () => { revoke?.() }
+  }, [project?.file_url])
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
@@ -344,12 +357,18 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
           >
             {/* Iframe showing uploaded design */}
             {project.file_url ? (
-              <iframe
-                src={project.file_url}
-                sandbox="allow-same-origin allow-scripts"
-                style={{ width: '1280px', height: '900px', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
-                title={project.name}
-              />
+              blobSrc ? (
+                <iframe
+                  src={blobSrc}
+                  sandbox="allow-same-origin allow-scripts"
+                  style={{ width: '1280px', height: '900px', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
+                  title={project.name}
+                />
+              ) : (
+                <div style={{ width: '1280px', height: '900px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                  Lädt…
+                </div>
+              )
             ) : (
               <div style={{ width: '1280px', height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
                 No design file uploaded

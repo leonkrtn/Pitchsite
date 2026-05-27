@@ -19,6 +19,7 @@ const T = {
     paymentStatus: 'Zahlungsstatus',
     paymentSub: 'Geld liegt sicher bis zur finalen Abnahme.',
     timeline: [
+      { title: 'Projekt erstellt', sub: (date: string) => `Erstellt am: ${date}` },
       { title: 'Zahlung eingegangen', sub: (amount: string) => `${amount} + 5% Pitchsite-Gebühr` },
       { title: 'Betrag in Escrow gesichert', sub: () => 'Sicher verwahrt bei Stripe / Pitchsite' },
       { title: 'Designer liefert', sub: (date: string) => `Fällig bis: ${date}` },
@@ -65,6 +66,7 @@ const T = {
     paymentStatus: 'Payment status',
     paymentSub: 'Funds secured until final approval.',
     timeline: [
+      { title: 'Project created', sub: (date: string) => `Created on: ${date}` },
       { title: 'Payment received', sub: (amount: string) => `${amount} + 5% Pitchsite fee` },
       { title: 'Amount secured in escrow', sub: () => 'Safely held by Stripe / Pitchsite' },
       { title: 'Designer delivers', sub: (date: string) => `Due by: ${date}` },
@@ -110,12 +112,12 @@ const T = {
 type StepStatus = 'done' | 'active' | 'open'
 
 function getTimelineStatuses(status: string): StepStatus[] {
-  if (status === 'offen')         return ['open',   'open',   'active', 'open',   'open']
-  if (status === 'ausstehend')    return ['done',   'done',   'active', 'open',   'open']
-  if (status === 'escrow')        return ['done',   'done',   'active', 'open',   'open']
-  if (status === 'abgeliefert')   return ['done',   'done',   'done',   'active', 'open']
-  if (status === 'abgeschlossen') return ['done',   'done',   'done',   'done',   'done']
-  return ['open', 'open', 'open', 'open', 'open']
+  if (status === 'offen')         return ['done', 'active', 'open',   'open',   'open',   'open']
+  if (status === 'ausstehend')    return ['done', 'done',   'active', 'open',   'open',   'open']
+  if (status === 'escrow')        return ['done', 'done',   'done',   'active', 'open',   'open']
+  if (status === 'abgeliefert')   return ['done', 'done',   'done',   'done',   'active', 'open']
+  if (status === 'abgeschlossen') return ['done', 'done',   'done',   'done',   'done',   'done']
+  return ['done', 'open', 'open', 'open', 'open', 'open']
 }
 
 function TimelineDot({ status }: { status: StepStatus }) {
@@ -239,8 +241,9 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
   const timelineItems = t.timeline.map((item, i) => ({
     ...item,
     status: timelineStatuses[i],
-    subText: i === 0 ? item.sub(formatAmount(project.amount))
-      : i === 2 ? item.sub(formatDate(project.delivery_date))
+    subText: i === 0 ? item.sub(formatDate(project.created_at))
+      : i === 1 ? item.sub(formatAmount(project.amount))
+      : i === 3 ? item.sub(formatDate(project.delivery_date))
       : item.sub(''),
   }))
 

@@ -6,6 +6,7 @@ import { ArrowLeft, Upload, CheckCircle, ZoomIn, ZoomOut, MessageCircle, X, Chec
 import { Button } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
+import { fetchAndRenderDesign } from '@/lib/renderDesign'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
@@ -124,6 +125,7 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
   const [showDeliverModal, setShowDeliverModal] = useState(false)
   const [delivering, setDelivering] = useState(false)
   const [isDelivered, setIsDelivered] = useState(false)
+  const [blobSrc, setBlobSrc] = useState<string | null>(null)
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -158,6 +160,17 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
     }
     load()
   }, [code])
+
+  useEffect(() => {
+    if (!project?.file_url || !project?.file_name) return
+    let revoke: (() => void) | null = null
+    setBlobSrc(null)
+    fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
+      setBlobSrc(src)
+      revoke = rv
+    }).catch(() => setBlobSrc(project.file_url))
+    return () => { revoke?.() }
+  }, [project?.file_url])
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -322,12 +335,18 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
             flexShrink: 0,
           }}>
             {project.file_url ? (
-              <iframe
-                src={project.file_url}
-                sandbox="allow-same-origin allow-scripts"
-                style={{ width: '1280px', height: '900px', border: 'none', display: 'block' }}
-                title={project.name}
-              />
+              blobSrc ? (
+                <iframe
+                  src={blobSrc}
+                  sandbox="allow-same-origin allow-scripts"
+                  style={{ width: '1280px', height: '900px', border: 'none', display: 'block' }}
+                  title={project.name}
+                />
+              ) : (
+                <div style={{ width: '1280px', height: '900px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                  Lädt…
+                </div>
+              )
             ) : (
               <div style={{ width: '1280px', height: '600px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
                 <Upload size={40} color="#CBD5E1" />
