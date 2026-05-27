@@ -298,7 +298,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
 
       // Load unread message counts per project
       if (projectData && projectData.length > 0) {
-        const ids = projectData.map(p => p.id)
+        const ids = (projectData as Project[]).map(p => p.id)
         const { data: unreadRows } = await (supabase as any)
           .from('project_messages')
           .select('project_id')
