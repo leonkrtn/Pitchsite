@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { MessageCircle, ZoomIn, ZoomOut, X, MousePointer } from 'lucide-react'
-import { Button } from '@/components/app/ds'
+import { MessageCircle, ZoomIn, ZoomOut, X, MousePointer, LogIn, UserPlus } from 'lucide-react'
+import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
 import type { Database } from '@/types/database'
@@ -25,6 +25,16 @@ const T = {
     allComments: (n: number) => `Alle Kommentare (${n})`,
     notFound: 'Projekt nicht gefunden.',
     reply: 'Antworten',
+    authRequired: 'Account erforderlich',
+    authSub: 'Um zu kommentieren oder das Projekt anzunehmen, benötigst du ein kostenloses Konto.',
+    loginTab: 'Anmelden',
+    signupTab: 'Registrieren',
+    name: 'Name',
+    email: 'E-Mail-Adresse',
+    password: 'Passwort',
+    loginBtn: 'Anmelden',
+    signupBtn: 'Konto erstellen',
+    authError: 'Fehler bei der Anmeldung. Bitte überprüfe deine Eingaben.',
   },
   en: {
     by: 'by',
@@ -39,6 +49,16 @@ const T = {
     allComments: (n: number) => `All comments (${n})`,
     notFound: 'Project not found.',
     reply: 'Reply',
+    authRequired: 'Account required',
+    authSub: 'To comment or accept the project, you need a free account.',
+    loginTab: 'Log in',
+    signupTab: 'Sign up',
+    name: 'Name',
+    email: 'Email address',
+    password: 'Password',
+    loginBtn: 'Log in',
+    signupBtn: 'Create account',
+    authError: 'Login failed. Please check your details.',
   },
 }
 
@@ -58,10 +78,22 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [acceptLoading, setAcceptLoading] = useState(false)
   const [authorName, setAuthorName] = useState('')
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [pendingAction, setPendingAction] = useState<'comment' | 'accept' | null>(null)
   const frameRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     async function load() {
+      // Check access: must have either localStorage entry or be the owner/client
+      const hasLocalAccess = typeof window !== 'undefined' && !!localStorage.getItem(`pitch_access_${code}`)
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!hasLocalAccess && !user) {
+        router.replace(`/${locale}/join`)
+        return
+      }
+
       const { data: proj } = await (supabase as any)
         .from('projects')
         .select('*')
@@ -69,7 +101,29 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         .single() as { data: Project | null }
 
       if (!proj) { setLoading(false); return }
+
+      // If accessed via URL directly (no localStorage), verify user is owner or client
+      if (!hasLocalAccess && user) {
+        const isOwner = proj.designer_id === user.id
+        const isClient = (proj as any).client_user_id === user.id
+        if (!isOwner && !isClient) {
+          router.replace(`/${locale}/join`)
+          return
+        }
+      }
+
       setProject(proj)
+
+      if (user) {
+        setCurrentUserId(user.id)
+        const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', user.id).single() as { data: { name: string } | null }
+        if (profile?.name) setAuthorName(profile.name)
+
+        // Link project to client if not yet linked and user is not the designer
+        if (!(proj as any).client_user_id && proj.designer_id !== user.id) {
+          await (supabase as any).from('projects').update({ client_user_id: user.id }).eq('id', proj.id)
+        }
+      }
 
       const { data: pinData } = await (supabase as any)
         .from('project_pins')
@@ -79,26 +133,24 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       setPins(pinData ?? [])
       setLoading(false)
-
-      // Try to get author name from session
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', user.id).single() as { data: { name: string } | null }
-        if (profile?.name) setAuthorName(profile.name)
-      }
     }
     load()
   }, [code])
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
+    if (!currentUserId) {
+      setPendingAction('comment')
+      setShowAuthModal(true)
+      return
+    }
     if (activePin) { setActivePin(null); return }
     const rect = frameRef.current!.getBoundingClientRect()
     const x = ((e.clientX - rect.left) / rect.width) * 100
     const y = ((e.clientY - rect.top) / rect.height) * 100
     setNewPin({ x, y })
     setActivePin(null)
-  }, [commentMode, activePin])
+  }, [commentMode, activePin, currentUserId])
 
   const handleAddComment = async (text: string) => {
     if (!project || !newPin) return
@@ -119,11 +171,33 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
   const handleAccept = () => {
     if (!project) return
+    if (!currentUserId) {
+      setPendingAction('accept')
+      setShowAuthModal(true)
+      return
+    }
     setAcceptLoading(true)
     setTimeout(() => {
       setAcceptLoading(false)
       router.push(`/${locale}/app/contract/${project.code}`)
     }, 800)
+  }
+
+  const handleAuthSuccess = async (userId: string, name: string) => {
+    setCurrentUserId(userId)
+    setAuthorName(name)
+    setShowAuthModal(false)
+
+    // Link project to client
+    if (project && project.designer_id !== userId) {
+      await (supabase as any).from('projects').update({ client_user_id: userId }).eq('id', project.id)
+    }
+
+    // Resume pending action
+    if (pendingAction === 'accept' && project) {
+      router.push(`/${locale}/app/contract/${project.code}`)
+    }
+    setPendingAction(null)
   }
 
   if (loading) {
@@ -144,6 +218,15 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
   return (
     <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#0F172A' }}>
+      {/* Auth modal */}
+      {showAuthModal && (
+        <AuthModal
+          t={t}
+          onClose={() => { setShowAuthModal(false); setPendingAction(null) }}
+          onSuccess={handleAuthSuccess}
+        />
+      )}
+
       {/* Header */}
       <div style={{ height: '64px', background: '#fff', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0, zIndex: 50 }}>
         <AppLogo />
@@ -264,6 +347,86 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
           onPinClick={id => { setActivePin(id); setSidebarOpen(false) }}
         />
       )}
+    </div>
+  )
+}
+
+// ── AUTH MODAL ────────────────────────────────────────────
+
+function AuthModal({ t, onClose, onSuccess }: {
+  t: typeof T.de
+  onClose: () => void
+  onSuccess: (userId: string, name: string) => void
+}) {
+  const supabase = createBrowserClient()
+  const [tab, setTab] = useState<'login' | 'signup'>('signup')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleSignup() {
+    setLoading(true); setError('')
+    const { data, error: e } = await supabase.auth.signUp({ email, password, options: { data: { name } } })
+    if (e || !data.user) { setError(t.authError); setLoading(false); return }
+    await (supabase as any).from('profiles').upsert({ id: data.user.id, name, email })
+    onSuccess(data.user.id, name)
+  }
+
+  async function handleLogin() {
+    setLoading(true); setError('')
+    const { data, error: e } = await supabase.auth.signInWithPassword({ email, password })
+    if (e || !data.user) { setError(t.authError); setLoading(false); return }
+    const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', data.user.id).single() as { data: { name: string } | null }
+    onSuccess(data.user.id, profile?.name ?? email)
+  }
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', maxWidth: '400px', width: '90%', boxShadow: '0 24px 80px rgba(0,0,0,.3)', animation: 'dropIn 200ms ease-out' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div>
+            <div style={{ fontSize: '18px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>{t.authRequired}</div>
+            <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B', marginTop: '4px' }}>{t.authSub}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', color: '#94A3B8' }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '4px', background: '#F8FAFC', borderRadius: '8px', padding: '4px', marginBottom: '20px' }}>
+          {(['signup', 'login'] as const).map(tp => (
+            <button
+              key={tp}
+              onClick={() => { setTab(tp); setError('') }}
+              style={{ flex: 1, padding: '8px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', background: tab === tp ? '#fff' : 'transparent', color: tab === tp ? '#0F172A' : '#64748B', boxShadow: tab === tp ? '0 1px 3px rgba(0,0,0,.08)' : 'none', transition: 'all 150ms' }}
+            >
+              {tp === 'signup' ? t.signupTab : t.loginTab}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+          {tab === 'signup' && (
+            <Input label={t.name} value={name} onChange={e => setName(e.target.value)} style={{ marginBottom: '12px' }} />
+          )}
+          <Input label={t.email} type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ marginBottom: '12px' }} />
+          <Input label={t.password} type="password" value={password} onChange={e => setPassword(e.target.value)} error={error} style={{ marginBottom: '4px' }} />
+        </div>
+
+        <Button
+          variant="primary"
+          fullWidth
+          loading={loading}
+          icon={tab === 'signup' ? <UserPlus size={15} /> : <LogIn size={15} />}
+          onClick={tab === 'signup' ? handleSignup : handleLogin}
+          style={{ marginTop: '16px' }}
+        >
+          {tab === 'signup' ? t.signupBtn : t.loginBtn}
+        </Button>
+      </div>
     </div>
   )
 }

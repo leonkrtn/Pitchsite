@@ -30,6 +30,7 @@ export interface Database {
           client_email: string | null
           created_at: string
           delivered_at: string | null
+          client_user_id: string | null
         }
         Insert: {
           designer_id: string
