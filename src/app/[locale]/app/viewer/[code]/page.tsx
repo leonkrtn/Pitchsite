@@ -7,6 +7,7 @@ import { Button } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
 import { fetchAndRenderDesign } from '@/lib/renderDesign'
+import { ChatWidget } from '@/components/app/ChatWidget'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
@@ -126,6 +127,7 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
   const [delivering, setDelivering] = useState(false)
   const [isDelivered, setIsDelivered] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
+  const [designerName, setDesignerName] = useState('')
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -137,6 +139,8 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push(`/${locale}/app/login`); return }
       setUserId(user.id)
+      const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', user.id).single() as { data: { name: string } | null }
+      if (profile?.name) setDesignerName(profile.name)
 
       const { data: proj } = await (supabase as any)
         .from('projects')
@@ -364,6 +368,18 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
           </div>
         </div>
       </div>
+
+      {/* Chat */}
+      {project && (
+        <ChatWidget
+          projectId={project.id}
+          senderName={designerName || 'Designer'}
+          isDesigner={true}
+          senderId={userId}
+          mode="floating"
+          locale={locale}
+        />
+      )}
 
       {/* Comment sidebar */}
       {sidebarOpen && (

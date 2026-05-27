@@ -139,8 +139,8 @@ function FilterTabs({ active, setActive, tabs }: { active: string; setActive: (t
 
 // ── PROJECT CARD ──────────────────────────────────────────
 
-function ProjectCard({ project, idx, locale, t, onNavigate, onArchive, onUnarchive }: {
-  project: Project; idx: number; locale: string; t: typeof T.de; onNavigate: (id: string) => void; onArchive: (id: string) => void; onUnarchive: (id: string) => void
+function ProjectCard({ project, idx, locale, t, onNavigate, onArchive, onUnarchive, unreadMessages }: {
+  project: Project; idx: number; locale: string; t: typeof T.de; onNavigate: (id: string) => void; onArchive: (id: string) => void; onUnarchive: (id: string) => void; unreadMessages?: number
 }) {
   const [hov, setHov] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -199,8 +199,10 @@ function ProjectCard({ project, idx, locale, t, onNavigate, onArchive, onUnarchi
         </div>
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <MessageCircle size={14} color="#94A3B8" />
-            <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>0 {t.comments}</span>
+            <MessageCircle size={14} color={unreadMessages ? '#1D4ED8' : '#94A3B8'} />
+            <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: unreadMessages ? '#1D4ED8' : '#64748B', fontWeight: unreadMessages ? 600 : 400 }}>
+              {unreadMessages ? `${unreadMessages} neu` : `0 ${t.comments}`}
+            </span>
           </span>
           <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
             <DollarSign size={14} color="#94A3B8" />
@@ -266,6 +268,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
   const [loading, setLoading] = useState(true)
   const [showArchived, setShowArchived] = useState(false)
   const [toast, setToast] = useState('')
+  const [unreadMap, setUnreadMap] = useState<Record<string, number>>({})
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 2500) }
 
@@ -292,6 +295,24 @@ export default function DashboardPage({ params }: { params: { locale: string } }
         .order('created_at', { ascending: false })
 
       setProjects(projectData ?? [])
+
+      // Load unread message counts per project
+      if (projectData && projectData.length > 0) {
+        const ids = projectData.map(p => p.id)
+        const { data: unreadRows } = await (supabase as any)
+          .from('project_messages')
+          .select('project_id')
+          .in('project_id', ids)
+          .eq('is_designer', false)
+          .eq('read_by_designer', false) as { data: { project_id: string }[] | null }
+
+        if (unreadRows) {
+          const map: Record<string, number> = {}
+          unreadRows.forEach(r => { map[r.project_id] = (map[r.project_id] ?? 0) + 1 })
+          setUnreadMap(map)
+        }
+      }
+
       setLoading(false)
     }
     load()
@@ -415,6 +436,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
                   onNavigate={(id) => router.push(`/${locale}/app/project/${id}`)}
                   onArchive={archiveProject}
                   onUnarchive={unarchiveProject}
+                  unreadMessages={unreadMap[project.id]}
                 />
               ))
             )}

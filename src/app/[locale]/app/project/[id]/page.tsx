@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Share2, Eye, Copy, Send, Archive, AlertCircle, Check, KeyRound } from 'lucide-react'
+import { Share2, Eye, Copy, Send, Archive, AlertCircle, Check, KeyRound, MessageSquare } from 'lucide-react'
 import { Button, Badge, Card, Divider } from '@/components/app/ds'
 import { DashboardLayout } from '@/components/app/AppSidebar'
 import { createBrowserClient } from '@/lib/supabase'
+import { ChatWidget } from '@/components/app/ChatWidget'
 import type { Database } from '@/types/database'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
@@ -59,6 +60,8 @@ const T = {
     pitchPwNone: 'Kein Passwort gesetzt',
     pitchPwChanged: 'Kunde hat eigenes Passwort gesetzt',
     pitchPwNotChanged: 'Erstzugang noch aktiv',
+    chat: 'Nachrichten',
+    chatSub: 'Direkter Chat mit deinem Kunden',
   },
   en: {
     breadcrumb: 'Dashboard',
@@ -106,6 +109,8 @@ const T = {
     pitchPwNone: 'No password set',
     pitchPwChanged: 'Client has set their own password',
     pitchPwNotChanged: 'Initial access still active',
+    chat: 'Messages',
+    chatSub: 'Direct chat with your client',
   },
 }
 
@@ -152,11 +157,16 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
   const [toast, setToast] = useState('')
   const [pitchPwInput, setPitchPwInput] = useState('')
   const [pitchPwSaving, setPitchPwSaving] = useState(false)
+  const [designerName, setDesignerName] = useState('')
+  const [designerId, setDesignerId] = useState('')
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push(`/${locale}/app/login`); return }
+      setDesignerId(user.id)
+      const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', user.id).single() as { data: { name: string } | null }
+      if (profile?.name) setDesignerName(profile.name)
 
       const { data: proj } = await supabase
         .from('projects')
@@ -343,6 +353,31 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
                   {t.autoApprove}
                 </span>
               </div>
+            </Card>
+
+            {/* Messages */}
+            <Card style={{ padding: '0', marginBottom: '24px', overflow: 'hidden' }}>
+              <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MessageSquare size={16} color="#1D4ED8" />
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>
+                    {t.chat}
+                  </div>
+                  <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#94A3B8', marginTop: '1px' }}>
+                    {t.chatSub}
+                  </div>
+                </div>
+              </div>
+              {project && (
+                <ChatWidget
+                  projectId={project.id}
+                  senderName={designerName || 'Designer'}
+                  isDesigner={true}
+                  senderId={designerId}
+                  mode="inline"
+                  locale={locale}
+                />
+              )}
             </Card>
 
             {/* Comments */}

@@ -8,6 +8,7 @@ import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
 import { fetchAndRenderDesign } from '@/lib/renderDesign'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
+import { ChatWidget } from '@/components/app/ChatWidget'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
@@ -549,6 +550,19 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
             {t.accept}
           </Button>
         </div>
+      )}
+
+      {/* Chat */}
+      {project && (
+        <ChatWidget
+          projectId={project.id}
+          senderName={authorName || (project as any).client_name || 'Kunde'}
+          isDesigner={false}
+          senderId={currentUserId}
+          mode="floating"
+          locale={locale}
+          bottomOffset={isMobile ? 68 : 0}
+        />
       )}
 
       {/* Comment Sidebar */}
