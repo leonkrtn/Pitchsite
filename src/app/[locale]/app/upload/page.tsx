@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, CheckCircle2, Copy, Share2, Check } from 'lucide-react'
+import { Upload, CheckCircle2 } from 'lucide-react'
 import { Button, Input, Textarea, Divider, StepLabel } from '@/components/app/ds'
 import { DashboardLayout } from '@/components/app/AppSidebar'
 import { createBrowserClient } from '@/lib/supabase'
@@ -130,10 +130,8 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
   const [progress, setProgress] = useState(0)
   const [fileName, setFileName] = useState('')
   const [fileSize, setFileSize] = useState('')
-  const [projectCode, setProjectCode] = useState('')
   const [fileUrl, setFileUrl] = useState('')
   const [pitchPassword, setPitchPassword] = useState('')
-  const [copied, setCopied] = useState(false)
   const [submitLoading, setSubmitLoading] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -154,9 +152,6 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
     setProgress(0)
     setError('')
 
-    const code = generateCode()
-    setProjectCode(code)
-
     // Simulate progress while uploading
     let p = 0
     intervalRef.current = setInterval(() => {
@@ -169,7 +164,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
     if (!user) { router.push(`/${locale}/app/login`); return }
 
     const ext = file.name.split('.').pop()
-    const path = `${user.id}/${code}.${ext}`
+    const path = `${user.id}/${Date.now()}.${ext}`
 
     const { data, error: uploadError } = await supabase.storage
       .from('design-uploads')
@@ -201,12 +196,14 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { router.push(`/${locale}/app/login`); return }
 
+    const code = generateCode()
+
     const { data, error: createError } = await (supabase as any)
       .from('projects')
       .insert({
         designer_id: user.id,
         name: name.trim(),
-        code: projectCode,
+        code,
         amount: amount ? parseFloat(amount) : null,
         delivery_date: date || null,
         description: desc.trim() || null,
@@ -231,12 +228,6 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
     }
 
     router.push(`/${locale}/app/project/${data.id}`)
-  }
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(projectCode)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
   }
 
   return (
@@ -374,17 +365,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
           <UploadProgress progress={progress} fileName={fileName} fileSize={fileSize} label={t.uploading} />
         )}
         {uploadState === 'success' && (
-          <UploadSuccess
-            code={projectCode}
-            copied={copied}
-            onCopy={handleCopyCode}
-            locale={locale}
-            successLabel={t.uploadSuccess}
-            codeLabel={t.codeLabel}
-            copyLabel={t.copyCode}
-            copiedLabel={t.copied}
-            shareLabel={t.shareLink}
-          />
+          <UploadSuccess fileName={fileName} successLabel={t.uploadSuccess} />
         )}
 
         <Divider style={{ margin: '32px 0' }} />
@@ -476,13 +457,9 @@ function UploadProgress({ progress, fileName, fileSize, label }: { progress: num
 
 // ── UPLOAD SUCCESS ────────────────────────────────────────
 
-function UploadSuccess({ code, copied, onCopy, locale, successLabel, codeLabel, copyLabel, copiedLabel, shareLabel }: {
-  code: string; copied: boolean; onCopy: () => void; locale: string;
-  successLabel: string; codeLabel: string; copyLabel: string; copiedLabel: string; shareLabel: string
-}) {
+function UploadSuccess({ fileName, successLabel }: { fileName: string; successLabel: string }) {
   const [visible, setVisible] = useState(false)
   useEffect(() => { const t = setTimeout(() => setVisible(true), 50); return () => clearTimeout(t) }, [])
-  const pitchUrl = typeof window !== 'undefined' ? `${window.location.origin}/${locale}/app/pitch/${code}` : `/${locale}/app/pitch/${code}`
 
   return (
     <div style={{
@@ -493,39 +470,13 @@ function UploadSuccess({ code, copied, onCopy, locale, successLabel, codeLabel, 
       transition: 'all 400ms cubic-bezier(.34,1.56,.64,1)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
-        <div style={{ animation: 'successPop 400ms cubic-bezier(.34,1.56,.64,1)' }}>
-          <CheckCircle2 size={48} color="#16A34A" />
-        </div>
+        <CheckCircle2 size={48} color="#16A34A" />
       </div>
       <div style={{ fontSize: '16px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#166534' }}>
         {successLabel}
       </div>
-      <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B', marginTop: '20px', marginBottom: '8px' }}>
-        {codeLabel}
-      </div>
-      <div style={{ background: '#0F172A', borderRadius: '12px', padding: '20px 28px', display: 'inline-block', marginBottom: '20px' }}>
-        <span style={{ fontSize: '32px', fontWeight: 700, fontFamily: '"Geist Mono", "Courier New", monospace', color: '#fff', letterSpacing: '0.15em' }}>
-          {code}
-        </span>
-      </div>
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '16px' }}>
-        <Button
-          variant="secondary" size="sm"
-          icon={copied ? <Check size={14} /> : <Copy size={14} />}
-          onClick={onCopy}
-        >
-          {copied ? copiedLabel : copyLabel}
-        </Button>
-        <Button
-          variant="ghost" size="sm"
-          icon={<Share2 size={14} />}
-          onClick={() => navigator.clipboard.writeText(pitchUrl)}
-        >
-          {shareLabel}
-        </Button>
-      </div>
-      <div style={{ fontSize: '13px', fontFamily: '"Geist Mono", monospace', color: '#64748B', background: '#F1F5F9', padding: '8px 14px', borderRadius: '6px', border: '1px solid #E2E8F0', display: 'inline-block' }}>
-        {pitchUrl}
+      <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#94A3B8', marginTop: '8px' }}>
+        {fileName}
       </div>
     </div>
   )
