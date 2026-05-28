@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Upload, CheckCircle, ZoomIn, ZoomOut, MessageCircle, X, Check } from 'lucide-react'
+import { ArrowLeft, Upload, CheckCircle, MessageCircle, X, Check } from 'lucide-react'
 import { Button } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
@@ -119,7 +119,6 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
   const [pins, setPins] = useState<Pin[]>([])
   const [loading, setLoading] = useState(true)
   const [userId, setUserId] = useState('')
-  const [zoom, setZoom] = useState(100)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState('')
@@ -337,22 +336,11 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
         </div>
       </div>
 
-      {/* Zoom toolbar */}
-      <div style={{ height: '44px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', flexShrink: 0 }}>
-        <button onClick={() => setZoom(z => Math.max(50, z - 10))} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ZoomOut size={14} color="#64748B" />
-        </button>
-        <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B', minWidth: '40px', textAlign: 'center' }}>{zoom}%</span>
-        <button onClick={() => setZoom(z => Math.min(150, z + 10))} style={{ width: '28px', height: '28px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ZoomIn size={14} color="#64748B" />
-        </button>
-      </div>
-
       {/* Design viewport */}
       <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'auto' }}>
           <div style={{
-            width: `${1280 * zoom / 100}px`,
+            width: '1280px',
             background: '#fff',
             boxShadow: '0 20px 80px rgba(0,0,0,.4)',
             position: 'relative',
