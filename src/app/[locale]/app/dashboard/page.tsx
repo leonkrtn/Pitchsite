@@ -374,7 +374,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         <StatCard label={t.stats.active} value={String(activeCount)} />
         <StatCard label={t.stats.escrow} value={escrowTotal > 0 ? `€ ${escrowTotal.toLocaleString('de-DE')},–` : '€ 0,–'} />
         <StatCard label={t.stats.paid} value={paidTotal > 0 ? `€ ${paidTotal.toLocaleString('de-DE')},–` : '€ 0,–'} />

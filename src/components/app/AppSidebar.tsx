@@ -244,13 +244,12 @@ function UpgradeModal({ locale, onClose }: { locale: string; onClose: () => void
   const plans = PLANS[locale as 'de' | 'en'] ?? PLANS.de
   const title = locale === 'en' ? 'Choose your plan' : 'Plan wählen'
   const comingSoon = locale === 'en' ? 'Coming soon' : 'Demnächst verfügbar'
-  const { isMobile } = useBreakpoint()
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
       <div style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '820px', boxShadow: '0 32px 100px rgba(0,0,0,.25)', animation: 'dropIn 200ms ease-out', overflow: 'hidden', maxHeight: '90vh', overflowY: 'auto' }}>
         {/* Header */}
-        <div style={{ padding: isMobile ? '20px 20px 0' : '28px 32px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '28px 32px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <Zap size={20} color="#1D4ED8" />
@@ -266,7 +265,7 @@ function UpgradeModal({ locale, onClose }: { locale: string; onClose: () => void
         </div>
 
         {/* Plans */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px', padding: isMobile ? '20px' : '24px 32px 32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', padding: '24px 32px 32px' }}>
           {plans.map(plan => (
             <PlanCard key={plan.key} plan={plan} comingSoon={comingSoon} />
           ))}
