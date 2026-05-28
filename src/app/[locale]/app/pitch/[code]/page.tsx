@@ -574,7 +574,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               </div>
 
               <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
-                {project.file_url ? (
+                {project.file_name ? (
                   blobSrc ? (
                     <iframe
                       src={blobSrc}
