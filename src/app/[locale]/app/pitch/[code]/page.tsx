@@ -97,7 +97,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [noPwSet, setNoPwSet] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
-  const [iframeHeight, setIframeHeight] = useState(900)
+  const [iframeHeight, setIframeHeight] = useState(5000)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
 
@@ -158,7 +158,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     if (!project?.file_url || !project?.file_name) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
-    setIframeHeight(900)
+    setIframeHeight(5000)
     fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
@@ -433,7 +433,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       {/* Viewport */}
       <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', position: 'relative', display: 'flex', flexDirection: 'column', marginBottom: `${bottomBarH}px` }}>
-        <div style={{ flex: 1, padding: previewMode === 'mobile' ? '32px 24px' : isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: previewMode === 'mobile' ? 'center' : 'flex-start', overflowX: isMobile && previewMode === 'desktop' ? 'auto' : 'hidden', overflowY: 'auto' }}>
+        <div style={{ flex: 1, minHeight: 0, padding: previewMode === 'mobile' ? '32px 24px' : isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: previewMode === 'mobile' ? 'center' : 'flex-start', overflowX: isMobile && previewMode === 'desktop' ? 'auto' : 'hidden', overflowY: 'auto' }}>
 
           {previewMode === 'desktop' ? (
             <div

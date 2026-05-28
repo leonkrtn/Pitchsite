@@ -12,15 +12,23 @@ function guessMime(filename: string): string {
   return map[ext] ?? 'application/octet-stream'
 }
 
-// Injected into every design HTML — reports full content height to parent via postMessage.
-// Fires on load + two delayed shots to catch font/JS-driven layout changes.
-// No ResizeObserver: changing iframeHeight from the parent would re-trigger it → infinite loop.
+// Injected into every design HTML — reports body content height via postMessage.
+// Uses document.body (not documentElement) so ResizeObserver doesn't loop:
+// changing the iframe's outer height doesn't change body.scrollHeight for
+// naturally-sized content, so the observer only fires on real content changes.
 const HEIGHT_SCRIPT = `<script>(function(){
   function send(){
-    var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);
-    parent.postMessage({type:'pitchsite-height',h:h},'*');
+    var h=document.body?document.body.scrollHeight:document.documentElement.scrollHeight;
+    if(h>0)parent.postMessage({type:'pitchsite-height',h:h},'*');
   }
-  window.addEventListener('load',function(){send();setTimeout(send,400);setTimeout(send,1200);});
+  window.addEventListener('load',function(){
+    send();setTimeout(send,400);setTimeout(send,1200);
+  });
+  if(typeof ResizeObserver!=='undefined'){
+    var ro=new ResizeObserver(send);
+    if(document.body)ro.observe(document.body);
+    else window.addEventListener('load',function(){ro.observe(document.body);});
+  }
 })();</script>`
 
 function injectHeightScript(html: string): string {
