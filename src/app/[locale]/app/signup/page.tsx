@@ -160,9 +160,7 @@ export default function SignupPage({ params }: { params: { locale: string } }) {
           <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,.05)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: '80px', right: '40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,.05)', pointerEvents: 'none' }} />
 
-          <AppLogo size={24} dark />
-
-          <div style={{ marginTop: '48px', flex: 1 }}>
+          <div style={{ marginTop: '0px', flex: 1 }}>
             <h1 style={{ fontSize: '48px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#fff', lineHeight: 1.1, marginBottom: '16px' }}>
               Endlich bezahlt.
             </h1>
@@ -203,7 +201,7 @@ export default function SignupPage({ params }: { params: { locale: string } }) {
         padding: isMobile ? '40px 24px' : '64px 80px',
         overflow: 'auto',
       }}>
-        {isMobile && <div style={{ marginBottom: '32px' }}><AppLogo size={22} /></div>}
+        <div style={{ marginBottom: '32px' }}><AppLogo /></div>
 
         <h2 style={{ fontSize: '30px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '8px' }}>
           {t.headline}

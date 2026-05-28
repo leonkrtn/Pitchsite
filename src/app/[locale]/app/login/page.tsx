@@ -250,8 +250,7 @@ export default function LoginPage({ params }: { params: { locale: string } }) {
         }}>
           <div style={{ position: 'absolute', top: '-80px', right: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,.05)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: '80px', right: '40px', width: '200px', height: '200px', borderRadius: '50%', background: 'rgba(255,255,255,.05)', pointerEvents: 'none' }} />
-          <AppLogo size={24} dark />
-          <div style={{ marginTop: '48px', flex: 1 }}>
+          <div style={{ marginTop: '0px', flex: 1 }}>
             <h1 style={{ fontSize: '42px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#fff', lineHeight: 1.1, marginBottom: '16px' }}>
               Endlich bezahlt.
             </h1>
@@ -288,7 +287,7 @@ export default function LoginPage({ params }: { params: { locale: string } }) {
         overflowY: 'auto',
       }}>
         <div style={{ width: '100%', maxWidth: '480px' }}>
-          {isMobile && <div style={{ marginBottom: '28px' }}><AppLogo size={22} /></div>}
+          <div style={{ marginBottom: '32px' }}><AppLogo /></div>
 
           {/* Mobile: code card comes first */}
           {isMobile && <div style={{ marginBottom: '16px' }}>{codeCard}</div>}
