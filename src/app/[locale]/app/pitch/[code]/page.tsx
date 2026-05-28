@@ -101,14 +101,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
   useEffect(() => {
     async function load() {
-      // Check access: must have either localStorage entry or be the owner/client
-      const hasLocalAccess = typeof window !== 'undefined' && !!localStorage.getItem(`pitch_access_${code}`)
       const { data: { user } } = await supabase.auth.getUser()
-
-      if (!hasLocalAccess && !user) {
-        router.replace(`/${locale}/join?code=${code}`)
-        return
-      }
 
       const { data: proj } = await (supabase as any)
         .from('projects')
@@ -118,23 +111,11 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       if (!proj) { setLoading(false); return }
 
-      // If accessed via URL directly (no localStorage), verify user is owner or client
-      if (!hasLocalAccess && user) {
-        const isOwner = proj.designer_id === user.id
-        const isClient = (proj as any).client_user_id === user.id
-        if (!isOwner && !isClient) {
-          router.replace(`/${locale}/join?code=${code}`)
-          return
-        }
-      }
-
       setProject(proj)
 
-      // Password gate: show for non-designers whose cached password doesn't match current
+      // Password gate: always show for non-designers — never cached
       const isDesigner = user?.id === proj.designer_id
-      const storedPw = typeof window !== 'undefined' ? localStorage.getItem(`pitch_unlocked_${code}`) : null
-      const isUnlocked = storedPw !== null && storedPw === (proj as any).pitch_password
-      if ((proj as any).pitch_password && !isDesigner && !isUnlocked) {
+      if ((proj as any).pitch_password && !isDesigner) {
         setShowPasswordGate(true)
       }
 
@@ -143,7 +124,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', user.id).single() as { data: { name: string } | null }
         if (profile?.name) setAuthorName(profile.name)
 
-        // Link project to client if not yet linked and user is not the designer
         if (!(proj as any).client_user_id && proj.designer_id !== user.id) {
           await (supabase as any).from('projects').update({ client_user_id: user.id }).eq('id', proj.id)
         }
@@ -157,10 +137,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       setPins(pinData ?? [])
       setLoading(false)
-
-      if (searchParams.get('setup') === '1') {
-        setShowSetupPw(true)
-      }
     }
     load()
   }, [code])
@@ -256,8 +232,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         correctPassword={(project as any).pitch_password}
         locale={locale}
         onUnlock={() => {
-          localStorage.setItem(`pitch_unlocked_${code}`, (project as any).pitch_password)
-          localStorage.setItem(`pitch_access_${code}`, '1')
           setShowPasswordGate(false)
           if (!(project as any).pitch_password_changed) setShowSetupPw(true)
         }}
