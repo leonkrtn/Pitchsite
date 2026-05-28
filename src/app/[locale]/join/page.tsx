@@ -70,16 +70,16 @@ export default function JoinPage({ params }: { params: { locale: string } }) {
     setLoading(true)
     setError('')
 
-    const { data: project, error: dbError } = await (supabase as any)
+    const { data: project } = await (supabase as any)
       .from('projects')
       .select('code, pitch_password, pitch_password_changed')
       .eq('code', trimmed)
-      .single() as { data: FoundProject | null; error: { message: string } | null }
+      .single() as { data: FoundProject | null }
 
     setLoading(false)
 
-    if (dbError || !project) {
-      setError(dbError ? `DB-Fehler: ${dbError.message}` : t.notFound)
+    if (!project) {
+      setError(t.notFound)
       return
     }
 
