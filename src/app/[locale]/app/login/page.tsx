@@ -46,7 +46,7 @@ const T = {
     codeSubmit: 'Öffnen',
     codeError: 'Code nicht gefunden. Bitte prüfe deine Eingabe.',
     // footer
-    footer: '© 2025 Pitchsite GmbH · Impressum · Datenschutz',
+    footer: '© 2025 Axion Nord UG (haftungsbeschränkt) · Impressum · Datenschutz',
   },
   en: {
     tabLogin: 'Sign in',
@@ -80,7 +80,7 @@ const T = {
     codePh: 'e.g. AB3X7K9PQR',
     codeSubmit: 'Open',
     codeError: 'Code not found. Please check your input.',
-    footer: '© 2025 Pitchsite GmbH · Imprint · Privacy',
+    footer: '© 2025 Axion Nord UG (haftungsbeschränkt) · Imprint · Privacy',
   },
 }
 

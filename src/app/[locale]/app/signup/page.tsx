@@ -33,7 +33,7 @@ const T = {
     errorWeak: 'Passwort muss mindestens 8 Zeichen haben.',
     errorEmail: 'Diese E-Mail ist bereits registriert.',
     errorGeneric: 'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
-    footer: '© 2025 Pitchsite GmbH · Impressum · Datenschutz',
+    footer: '© 2025 Axion Nord UG (haftungsbeschränkt) · Impressum · Datenschutz',
     pwLabels: ['', 'Schwach', 'Mittel', 'Gut', 'Stark'],
   },
   en: {
@@ -60,7 +60,7 @@ const T = {
     errorWeak: 'Password must be at least 8 characters.',
     errorEmail: 'This email is already registered.',
     errorGeneric: 'Registration failed. Please try again.',
-    footer: '© 2025 Pitchsite GmbH · Imprint · Privacy',
+    footer: '© 2025 Axion Nord UG (haftungsbeschränkt) · Imprint · Privacy',
     pwLabels: ['', 'Weak', 'Medium', 'Good', 'Strong'],
   },
 }
