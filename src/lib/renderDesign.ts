@@ -12,6 +12,21 @@ function guessMime(filename: string): string {
   return map[ext] ?? 'application/octet-stream'
 }
 
+// Injected into every design HTML — reports full content height to parent via postMessage
+// so pins can be positioned over the full design regardless of iframe origin.
+const HEIGHT_SCRIPT = `<script>(function(){
+  function send(){parent.postMessage({type:'pitchsite-height',h:document.documentElement.scrollHeight},'*')}
+  window.addEventListener('load',send);
+  if(typeof ResizeObserver!=='undefined'){new ResizeObserver(send).observe(document.documentElement)}
+  setTimeout(send,500);setTimeout(send,1500);
+})();</script>`
+
+function injectHeightScript(html: string): string {
+  if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, HEIGHT_SCRIPT + '</body>')
+  if (/<\/html>/i.test(html)) return html.replace(/<\/html>/i, HEIGHT_SCRIPT + '</html>')
+  return html + HEIGHT_SCRIPT
+}
+
 async function resolveZip(blob: Blob): Promise<{ src: string; revoke: () => void }> {
   const zip = await JSZip.loadAsync(blob)
   const entries = Object.keys(zip.files)
@@ -47,7 +62,7 @@ async function resolveZip(blob: Blob): Promise<{ src: string; revoke: () => void
       const u = resolve(path); return u ? `url(${q}${u}${q})` : match
     })
 
-  const src = URL.createObjectURL(new Blob([rewritten], { type: 'text/html' }))
+  const src = URL.createObjectURL(new Blob([injectHeightScript(rewritten)], { type: 'text/html' }))
   blobUrls.push(src)
   return { src, revoke: () => blobUrls.forEach(URL.revokeObjectURL) }
 }
@@ -63,6 +78,7 @@ export async function fetchAndRenderDesign(
     return resolveZip(blob)
   }
 
-  const src = URL.createObjectURL(new Blob([blob], { type: 'text/html' }))
+  const html = await blob.text()
+  const src = URL.createObjectURL(new Blob([injectHeightScript(html)], { type: 'text/html' }))
   return { src, revoke: () => URL.revokeObjectURL(src) }
 }

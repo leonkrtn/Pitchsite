@@ -100,7 +100,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [iframeHeight, setIframeHeight] = useState(900)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
-  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -167,17 +166,15 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     return () => { revoke?.() }
   }, [project?.file_url])
 
-  const handleIframeLoad = useCallback(() => {
-    try {
-      const doc = iframeRef.current?.contentDocument
-      if (doc) {
-        const h = Math.max(
-          doc.documentElement.scrollHeight,
-          doc.body?.scrollHeight ?? 0,
-        )
-        if (h > 100) setIframeHeight(h)
+  // Listen for height reports from the injected script inside the design iframe
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'pitchsite-height' && typeof e.data.h === 'number' && e.data.h > 100) {
+        setIframeHeight(e.data.h)
       }
-    } catch {}
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
   }, [])
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
@@ -454,9 +451,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               {project.file_url ? (
                 blobSrc ? (
                   <iframe
-                    ref={iframeRef}
                     src={blobSrc}
-                    onLoad={handleIframeLoad}
                     sandbox="allow-same-origin allow-scripts"
                     style={{ width: '1280px', height: `${iframeHeight}px`, border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
                     title={project.name}
