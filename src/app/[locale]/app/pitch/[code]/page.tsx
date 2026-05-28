@@ -97,7 +97,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [noPwSet, setNoPwSet] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
-  const [iframeHeight, setIframeHeight] = useState(5000)
+  const [iframeHeight, setIframeHeight] = useState(1200)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
 
@@ -158,7 +158,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     if (!project?.file_url || !project?.file_name) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
-    setIframeHeight(5000)
+    setIframeHeight(1200)
     fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
@@ -169,8 +169,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   // Listen for height reports from the injected script inside the design iframe
   useEffect(() => {
     const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'pitchsite-height' && typeof e.data.h === 'number' && e.data.h > 100) {
-        setIframeHeight(e.data.h)
+      if (e.data?.type === 'pitchsite-height' && typeof e.data.h === 'number' && e.data.h > 50) {
+        setIframeHeight(Math.min(e.data.h, 16000))
       }
     }
     window.addEventListener('message', handler)
