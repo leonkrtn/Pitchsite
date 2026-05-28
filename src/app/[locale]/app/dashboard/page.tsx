@@ -74,7 +74,7 @@ function StatCard({ label, value, change, positive }: { label: string; value: st
   return (
     <div style={{
       background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px',
-      padding: '20px 24px', flex: 1,
+      padding: '20px 24px',
       boxShadow: '0 1px 3px rgba(0,0,0,.06)',
     }}>
       <div style={{ fontSize: '12px', fontWeight: 500, fontFamily: 'Inter, sans-serif', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
@@ -374,7 +374,7 @@ export default function DashboardPage({ params }: { params: { locale: string } }
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '32px', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
         <StatCard label={t.stats.active} value={String(activeCount)} />
         <StatCard label={t.stats.escrow} value={escrowTotal > 0 ? `€ ${escrowTotal.toLocaleString('de-DE')},–` : '€ 0,–'} />
         <StatCard label={t.stats.paid} value={paidTotal > 0 ? `€ ${paidTotal.toLocaleString('de-DE')},–` : '€ 0,–'} />

@@ -6,6 +6,7 @@ import { Upload, CheckCircle2, Copy, Share2, Check } from 'lucide-react'
 import { Button, Input, Textarea, Divider, StepLabel } from '@/components/app/ds'
 import { DashboardLayout } from '@/components/app/AppSidebar'
 import { createBrowserClient } from '@/lib/supabase'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const T = {
   de: {
@@ -116,6 +117,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
   const t = T[locale as 'de' | 'en'] ?? T.de
   const router = useRouter()
   const supabase = createBrowserClient()
+  const { isMobile } = useBreakpoint()
 
   const [name, setName] = useState('')
   const [amount, setAmount] = useState('')
@@ -269,7 +271,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
           value={name} onChange={e => setName(e.target.value)} required
         />
 
-        <div style={{ display: 'flex', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '16px', flexDirection: isMobile ? 'column' : 'row' }}>
           <Input
             label={t.amountLabel} type="number" placeholder={t.amountPh}
             value={amount} onChange={e => setAmount(e.target.value)}
@@ -295,29 +297,29 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
           <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '20px' }}>
             {t.step1b}
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: '16px', flexDirection: isMobile ? 'column' : 'row' }}>
             <Input
               label={t.clientCompanyLabel} placeholder={t.clientCompanyPh}
               value={clientCompany} onChange={e => setClientCompany(e.target.value)}
-              style={{ flex: 1, marginBottom: 0 }}
+              style={{ flex: 1, marginBottom: isMobile ? undefined : 0 }}
             />
             <Input
               label={t.clientContactLabel} placeholder={t.clientContactPh}
               value={clientContact} onChange={e => setClientContact(e.target.value)}
-              style={{ flex: 1, marginBottom: 0 }}
+              style={{ flex: 1, marginBottom: isMobile ? undefined : 0 }}
             />
           </div>
-          <div style={{ height: '16px' }} />
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ height: isMobile ? '0' : '16px' }} />
+          <div style={{ display: 'flex', gap: '16px', flexDirection: isMobile ? 'column' : 'row' }}>
             <Input
               label={t.clientEmailLabel} type="email" placeholder={t.clientEmailPh}
               value={clientEmail} onChange={e => setClientEmail(e.target.value)}
-              style={{ flex: 1, marginBottom: 0 }}
+              style={{ flex: 1, marginBottom: isMobile ? undefined : 0 }}
             />
             <Input
               label={t.clientPhoneLabel} type="tel" placeholder={t.clientPhonePh}
               value={clientPhone} onChange={e => setClientPhone(e.target.value)}
-              style={{ flex: 1, marginBottom: 0 }}
+              style={{ flex: 1, marginBottom: isMobile ? undefined : 0 }}
             />
           </div>
           <div style={{ height: '16px' }} />
