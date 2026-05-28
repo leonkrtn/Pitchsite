@@ -50,6 +50,7 @@ const T = {
     errorCreate: 'Projekt konnte nicht erstellt werden.',
     errorNoFile: 'Bitte lade zuerst eine Datei hoch.',
     errorNoName: 'Bitte gib einen Projektnamen ein.',
+    errorNoPassword: 'Bitte lege ein Passwort für den Kunden-Zugang fest.',
     accessTitle: 'Pitch-Zugang',
     accessSub: 'Dein Kunde muss dieses Passwort eingeben, bevor er den Pitch öffnen kann.',
     accessLabel: 'Einmalpasswort für Kunden',
@@ -97,6 +98,7 @@ const T = {
     errorCreate: 'Could not create project.',
     errorNoFile: 'Please upload a file first.',
     errorNoName: 'Please enter a project name.',
+    errorNoPassword: 'Please set a password for client access.',
     accessTitle: 'Pitch access',
     accessSub: 'Your client must enter this password before viewing the pitch.',
     accessLabel: 'One-time password for client',
@@ -190,6 +192,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
 
   const handleSubmit = async () => {
     if (!name.trim()) { setError(t.errorNoName); return }
+    if (!pitchPassword.trim()) { setError(t.errorNoPassword); return }
     if (uploadState !== 'success') { setError(t.errorNoFile); return }
 
     setSubmitLoading(true)
@@ -325,10 +328,15 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
           />
         </div>
 
-        {/* Pitch access password */}
-        <div style={{ marginTop: '16px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px 24px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A', marginBottom: '2px' }}>
-            {t.accessTitle}
+        {/* Pitch access password — required */}
+        <div style={{ marginTop: '16px', background: '#F8FAFC', border: `1px solid ${pitchPassword.trim() ? '#E2E8F0' : '#FCA5A5'}`, borderRadius: '12px', padding: '20px 24px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>
+              {t.accessTitle}
+            </div>
+            <span style={{ fontSize: '11px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#DC2626', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', padding: '1px 6px' }}>
+              Pflicht
+            </span>
           </div>
           <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#94A3B8', marginBottom: '14px' }}>
             {t.accessSub}
@@ -339,6 +347,7 @@ export default function UploadPage({ params }: { params: { locale: string } }) {
             placeholder={t.accessPh}
             value={pitchPassword}
             onChange={e => setPitchPassword(e.target.value)}
+            required
             style={{ marginBottom: 0 }}
           />
         </div>

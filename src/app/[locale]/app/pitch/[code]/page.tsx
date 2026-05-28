@@ -104,7 +104,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!hasLocalAccess && !user) {
-        router.replace(`/${locale}/join`)
+        router.replace(`/${locale}/join?code=${code}`)
         return
       }
 
@@ -121,7 +121,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         const isOwner = proj.designer_id === user.id
         const isClient = (proj as any).client_user_id === user.id
         if (!isOwner && !isClient) {
-          router.replace(`/${locale}/join`)
+          router.replace(`/${locale}/join?code=${code}`)
           return
         }
       }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Hash, ArrowRight, AlertCircle, Lock } from 'lucide-react'
 import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
@@ -55,6 +55,8 @@ export default function JoinPage({ params }: { params: { locale: string } }) {
   const router = useRouter()
   const supabase = createBrowserClient()
 
+  const searchParams = useSearchParams()
+
   const [step, setStep] = useState<'code' | 'password'>('code')
   const [code, setCode] = useState('')
   const [pitchPw, setPitchPw] = useState('')
@@ -62,8 +64,8 @@ export default function JoinPage({ params }: { params: { locale: string } }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleCodeSubmit() {
-    const trimmed = code.trim().toUpperCase()
+  async function lookupCode(value: string) {
+    const trimmed = value.trim().toUpperCase()
     if (!trimmed) return
     setLoading(true)
     setError('')
@@ -91,6 +93,19 @@ export default function JoinPage({ params }: { params: { locale: string } }) {
     }
   }
 
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code')
+    if (codeFromUrl) {
+      const normalized = codeFromUrl.toUpperCase()
+      setCode(normalized)
+      lookupCode(normalized)
+    }
+  }, [])
+
+  async function handleCodeSubmit() {
+    await lookupCode(code)
+  }
+
   async function handlePasswordSubmit() {
     if (!foundProject) return
     setLoading(true)
@@ -103,6 +118,7 @@ export default function JoinPage({ params }: { params: { locale: string } }) {
     }
 
     localStorage.setItem(`pitch_access_${foundProject.code}`, Date.now().toString())
+    localStorage.setItem(`pitch_unlocked_${foundProject.code}`, pitchPw)
     setLoading(false)
 
     if (!foundProject.pitch_password_changed) {
