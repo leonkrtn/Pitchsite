@@ -96,6 +96,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showSetupPw, setShowSetupPw] = useState(false)
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [noPwSet, setNoPwSet] = useState(false)
+  const [unlocked, setUnlocked] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
   const [contentHeight, setContentHeight] = useState(0)
   const [iframeScrollTop, setIframeScrollTop] = useState(0)
@@ -108,7 +109,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       const { data: proj } = await (supabase as any)
         .from('projects')
-        .select('*')
+        .select('id, designer_id, name, code, file_name, status, client_name, client_email, client_user_id, pitch_password_changed, created_at, amount, description, delivery_date')
         .eq('code', code)
         .single() as { data: Project | null }
 
@@ -118,17 +119,22 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       const isDesigner = user?.id === proj.designer_id
 
-      if (!isDesigner) {
-        const pw = (proj as any).pitch_password as string | null
-        if (!pw) {
+      if (isDesigner) {
+        setUnlocked(true)
+      } else {
+        // Check server-side: is password set, is cookie already present?
+        const statusRes = await fetch(`/api/pitch/${code}/unlock`)
+        const { hasPassword, isUnlocked } = await statusRes.json()
+
+        if (!hasPassword) {
           setNoPwSet(true)
           setLoading(false)
           return
         }
-        // Check sessionStorage — unlocked for this browser session already?
-        const sessionKey = `pitch_unlocked_${code}`
-        const sessionPw = typeof window !== 'undefined' ? sessionStorage.getItem(sessionKey) : null
-        if (sessionPw !== pw) {
+
+        if (isUnlocked) {
+          setUnlocked(true)
+        } else {
           setShowPasswordGate(true)
         }
       }
@@ -156,17 +162,18 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   }, [code])
 
   useEffect(() => {
-    if (!project?.file_url || !project?.file_name) return
+    if (!project?.file_name || !unlocked) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
     setContentHeight(0)
     setIframeScrollTop(0)
-    fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
+    const proxyUrl = `/api/pitch/${code}/file`
+    fetchAndRenderDesign(proxyUrl, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
-    }).catch(() => setBlobSrc(project.file_url))
+    }).catch(() => setBlobSrc(proxyUrl))
     return () => { revoke?.() }
-  }, [project?.file_url])
+  }, [project?.id, unlocked])
 
   // Listen for height and scroll reports from the injected script inside the design iframe.
   // RAF throttle on scroll ensures we update at most once per animation frame.
@@ -287,11 +294,11 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   if (showPasswordGate) {
     return (
       <PasswordGate
-        correctPassword={(project as any).pitch_password}
+        code={code}
         locale={locale}
         onUnlock={() => {
-          sessionStorage.setItem(`pitch_unlocked_${code}`, (project as any).pitch_password)
           setShowPasswordGate(false)
+          setUnlocked(true)
           if (!(project as any).pitch_password_changed) setShowSetupPw(true)
         }}
       />
@@ -464,7 +471,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 overflow: 'hidden',
               }}
             >
-              {project.file_url ? (
+              {project.file_name ? (
                 blobSrc ? (
                   <iframe
                     src={blobSrc}
@@ -624,13 +631,14 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
 // ── PASSWORD GATE ─────────────────────────────────────────
 
-function PasswordGate({ correctPassword, onUnlock, locale }: {
-  correctPassword: string
+function PasswordGate({ code, onUnlock, locale }: {
+  code: string
   onUnlock: () => void
   locale: string
 }) {
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState(false)
   const isDE = locale !== 'en'
 
@@ -644,8 +652,17 @@ function PasswordGate({ correctPassword, onUnlock, locale }: {
     errorMsg: isDE ? 'Falsches Passwort. Bitte nochmal versuchen.' : 'Wrong password. Please try again.',
   }
 
-  const submit = () => {
-    if (input === correctPassword) {
+  const submit = async () => {
+    if (!input || loading) return
+    setLoading(true)
+    setError(false)
+    const res = await fetch(`/api/pitch/${code}/unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: input }),
+    })
+    setLoading(false)
+    if (res.ok) {
       onUnlock()
     } else {
       setError(true)
@@ -691,17 +708,17 @@ function PasswordGate({ correctPassword, onUnlock, locale }: {
         </div>
         <button
           onClick={submit}
-          disabled={!input}
+          disabled={!input || loading}
           style={{
-            width: '100%', height: '48px', background: input ? '#1D4ED8' : '#E2E8F0',
-            color: input ? '#fff' : '#94A3B8', border: 'none', borderRadius: '12px',
+            width: '100%', height: '48px', background: input && !loading ? '#1D4ED8' : '#E2E8F0',
+            color: input && !loading ? '#fff' : '#94A3B8', border: 'none', borderRadius: '12px',
             fontSize: '15px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
-            cursor: input ? 'pointer' : 'not-allowed', transition: 'background 150ms, color 150ms',
+            cursor: input && !loading ? 'pointer' : 'not-allowed', transition: 'background 150ms, color 150ms',
           }}
-          onMouseEnter={e => { if (input) e.currentTarget.style.background = '#1E40AF' }}
-          onMouseLeave={e => { if (input) e.currentTarget.style.background = '#1D4ED8' }}
+          onMouseEnter={e => { if (input && !loading) e.currentTarget.style.background = '#1E40AF' }}
+          onMouseLeave={e => { if (input && !loading) e.currentTarget.style.background = '#1D4ED8' }}
         >
-          {labels.cta}
+          {loading ? '…' : labels.cta}
         </button>
       </div>
     </div>
