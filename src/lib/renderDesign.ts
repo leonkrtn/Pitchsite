@@ -13,18 +13,14 @@ function guessMime(filename: string): string {
 }
 
 // Injected into every design HTML.
-// The <style> forces html/body to their natural content height so scrollHeight
-// reflects actual content regardless of height:100% in the design's own CSS.
-// ResizeObserver on documentElement is safe here because height:auto means
-// changing the outer iframe height no longer changes scrollHeight → no loop.
-const HEIGHT_SCRIPT = `<style>html,body{height:auto!important;min-height:0!important}</style>
-<script>(function(){
-  function send(){
-    var h=document.documentElement.scrollHeight;
-    if(h>50)parent.postMessage({type:'pitchsite-height',h:h},'*');
-  }
-  window.addEventListener('load',function(){send();setTimeout(send,400);setTimeout(send,1200);});
-  if(typeof ResizeObserver!=='undefined')new ResizeObserver(send).observe(document.documentElement);
+// Reports scrollHeight (content height) on load so the parent can compute pin positions.
+// Reports scrollY on every scroll event so the parent can offset pins accordingly.
+// No CSS overrides — the design renders exactly as-is inside a fixed viewport iframe.
+const HEIGHT_SCRIPT = `<script>(function(){
+  function sendH(){var h=document.documentElement.scrollHeight;if(h>50)parent.postMessage({type:'pitchsite-height',h:h},'*');}
+  function sendS(){parent.postMessage({type:'pitchsite-scroll',y:window.scrollY},'*');}
+  window.addEventListener('load',function(){sendH();setTimeout(sendH,400);setTimeout(sendH,1200);});
+  window.addEventListener('scroll',sendS,{passive:true});
 })();</script>`
 
 function injectHeightScript(html: string): string {

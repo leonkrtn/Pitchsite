@@ -97,7 +97,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [noPwSet, setNoPwSet] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
-  const [iframeHeight, setIframeHeight] = useState(1200)
+  const [contentHeight, setContentHeight] = useState(0)
+  const [iframeScrollTop, setIframeScrollTop] = useState(0)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
 
@@ -158,7 +159,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     if (!project?.file_url || !project?.file_name) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
-    setIframeHeight(1200)
+    setContentHeight(0)
+    setIframeScrollTop(0)
     fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
@@ -166,26 +168,38 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     return () => { revoke?.() }
   }, [project?.file_url])
 
-  // Listen for height reports from the injected script inside the design iframe
+  // Listen for height and scroll reports from the injected script inside the design iframe.
+  // RAF throttle on scroll ensures we update at most once per animation frame.
   useEffect(() => {
+    let rafId = 0
     const handler = (e: MessageEvent) => {
       if (e.data?.type === 'pitchsite-height' && typeof e.data.h === 'number' && e.data.h > 50) {
-        setIframeHeight(Math.min(e.data.h, 16000))
+        setContentHeight(e.data.h)
+      }
+      if (e.data?.type === 'pitchsite-scroll' && typeof e.data.y === 'number') {
+        cancelAnimationFrame(rafId)
+        const y = e.data.y
+        rafId = requestAnimationFrame(() => setIframeScrollTop(y))
       }
     }
     window.addEventListener('message', handler)
-    return () => window.removeEventListener('message', handler)
+    return () => { window.removeEventListener('message', handler); cancelAnimationFrame(rafId) }
   }, [])
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
     if (activePin) { setActivePin(null); return }
     const rect = frameRef.current!.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
+    const xInFrame = e.clientX - rect.left
+    const yInFrame = e.clientY - rect.top
+    const x = (xInFrame / rect.width) * 100
+    const yInContent = yInFrame + iframeScrollTop
+    const y = contentHeight > 0
+      ? (yInContent / contentHeight) * 100
+      : (yInFrame / rect.height) * 100
     setNewPin({ x, y })
     setActivePin(null)
-  }, [commentMode, activePin])
+  }, [commentMode, activePin, iframeScrollTop, contentHeight])
 
   const handleAddComment = async (text: string, anonymousName?: string) => {
     if (!project || !newPin) return
@@ -446,6 +460,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 position: 'relative',
                 cursor: commentMode ? 'crosshair' : 'default',
                 flexShrink: 0,
+                alignSelf: 'stretch',
+                overflow: 'hidden',
               }}
             >
               {project.file_url ? (
@@ -453,46 +469,64 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                   <iframe
                     src={blobSrc}
                     sandbox="allow-same-origin allow-scripts"
-                    style={{ width: '1280px', height: `${iframeHeight}px`, border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
+                    style={{ width: '1280px', height: '100%', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
                     title={project.name}
                   />
                 ) : (
-                  <div style={{ width: '1280px', height: `${iframeHeight}px`, minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                  <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
                     Lädt…
                   </div>
                 )
               ) : (
-                <div style={{ width: '1280px', height: `${iframeHeight}px`, minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+                <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
                   No design file uploaded
                 </div>
               )}
 
-              {pins.map((pin, i) => (
-                <CommentPin
-                  key={pin.id}
-                  pin={pin}
-                  number={i + 1}
-                  active={activePin === pin.id}
-                  onClick={() => setActivePin(activePin === pin.id ? null : pin.id)}
-                  t={t}
-                />
-              ))}
-
-              {newPin && commentMode && (
-                <>
-                  <div style={{ position: 'absolute', left: `${newPin.x}%`, top: `${newPin.y}%`, width: '28px', height: '28px', borderRadius: '50% 50% 50% 0', background: 'rgba(29,78,216,.6)', border: '2px solid #fff', zIndex: 10 }} />
-                  <NewCommentPopover
-                    pos={newPin}
-                    onClose={() => setNewPin(null)}
-                    onSubmit={handleAddComment}
-                    placeholder={t.commentPh}
-                    cancelLabel={t.cancel}
-                    sendLabel={t.send}
-                    showNameField={!currentUserId}
-                    namePlaceholder={t.namePh}
+              {pins.map((pin, i) => {
+                const topPx = contentHeight > 0
+                  ? (pin.y_pct / 100) * contentHeight - iframeScrollTop
+                  : undefined
+                return (
+                  <CommentPin
+                    key={pin.id}
+                    pin={pin}
+                    number={i + 1}
+                    active={activePin === pin.id}
+                    onClick={() => setActivePin(activePin === pin.id ? null : pin.id)}
+                    t={t}
+                    topPx={topPx}
                   />
-                </>
-              )}
+                )
+              })}
+
+              {newPin && commentMode && (() => {
+                const newPinTopPx = contentHeight > 0
+                  ? (newPin.y / 100) * contentHeight - iframeScrollTop
+                  : undefined
+                return (
+                  <>
+                    <div style={{
+                      position: 'absolute',
+                      left: `${newPin.x}%`,
+                      top: newPinTopPx !== undefined ? `${newPinTopPx}px` : `${newPin.y}%`,
+                      width: '28px', height: '28px', borderRadius: '50% 50% 50% 0',
+                      background: 'rgba(29,78,216,.6)', border: '2px solid #fff', zIndex: 10,
+                    }} />
+                    <NewCommentPopover
+                      pos={newPin}
+                      topPx={newPinTopPx}
+                      onClose={() => setNewPin(null)}
+                      onSubmit={handleAddComment}
+                      placeholder={t.commentPh}
+                      cancelLabel={t.cancel}
+                      sendLabel={t.send}
+                      showNameField={!currentUserId}
+                      namePlaceholder={t.namePh}
+                    />
+                  </>
+                )
+              })()}
             </div>
           ) : (
             <div style={{
@@ -825,11 +859,11 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: (v: boolean) =>
 
 // ── COMMENT PIN ───────────────────────────────────────────
 
-function CommentPin({ pin, number, active, onClick, t }: { pin: Pin; number: number; active: boolean; onClick: () => void; t: typeof T.de }) {
+function CommentPin({ pin, number, active, onClick, t, topPx }: { pin: Pin; number: number; active: boolean; onClick: () => void; t: typeof T.de; topPx?: number }) {
   const [hov, setHov] = useState(false)
   const initials = pin.author.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
   return (
-    <div style={{ position: 'absolute', left: `${pin.x_pct}%`, top: `${pin.y_pct}%`, zIndex: 10 }}>
+    <div style={{ position: 'absolute', left: `${pin.x_pct}%`, top: topPx !== undefined ? `${topPx}px` : `${pin.y_pct}%`, zIndex: 10 }}>
       <div
         onClick={e => { e.stopPropagation(); onClick() }}
         onMouseEnter={() => setHov(true)}
@@ -871,8 +905,9 @@ function CommentPin({ pin, number, active, onClick, t }: { pin: Pin; number: num
 
 // ── NEW COMMENT POPOVER ───────────────────────────────────
 
-function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, sendLabel, showNameField, namePlaceholder }: {
+function NewCommentPopover({ pos, topPx, onClose, onSubmit, placeholder, cancelLabel, sendLabel, showNameField, namePlaceholder }: {
   pos: { x: number; y: number }
+  topPx?: number
   onClose: () => void
   onSubmit: (text: string, name?: string) => void
   placeholder: string
@@ -887,9 +922,10 @@ function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, s
     return localStorage.getItem('commenter_name') ?? ''
   })
   const [focused, setFocused] = useState(false)
+  const topStyle = topPx !== undefined ? `calc(${topPx}px - 8px)` : `calc(${pos.y}% - 8px)`
   return (
     <div onClick={e => e.stopPropagation()} style={{
-      position: 'absolute', left: `calc(${pos.x}% + 32px)`, top: `calc(${pos.y}% - 8px)`,
+      position: 'absolute', left: `calc(${pos.x}% + 32px)`, top: topStyle,
       width: '300px', background: '#fff', border: '1px solid #E2E8F0',
       borderRadius: '12px', padding: '16px', boxShadow: '0 8px 32px rgba(0,0,0,.15)', zIndex: 30,
       animation: 'dropIn 150ms ease-out',
