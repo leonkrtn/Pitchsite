@@ -58,11 +58,11 @@ const T = {
   },
 }
 
-function ReadOnlyPin({ pin, number, locale, onResolve }: { pin: Pin; number: number; locale: string; onResolve: () => void }) {
+function ReadOnlyPin({ pin, number, locale, onResolve, topPx }: { pin: Pin; number: number; locale: string; onResolve: () => void; topPx?: number }) {
   const [hov, setHov] = useState(false)
   const t = T[locale as 'de' | 'en'] ?? T.de
   return (
-    <div style={{ position: 'absolute', left: `${pin.x_pct}%`, top: `${pin.y_pct}%`, zIndex: 10 }}>
+    <div style={{ position: 'absolute', left: `${pin.x_pct}%`, top: topPx !== undefined ? `${topPx}px` : `${pin.y_pct}%`, zIndex: 10 }}>
       <div
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
@@ -127,6 +127,8 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
   const [delivering, setDelivering] = useState(false)
   const [isDelivered, setIsDelivered] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
+  const [contentHeight, setContentHeight] = useState(0)
+  const [iframeScrollTop, setIframeScrollTop] = useState(0)
   const [designerName, setDesignerName] = useState('')
 
   const showToast = (msg: string) => {
@@ -169,12 +171,30 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
     if (!project?.file_url || !project?.file_name) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
+    setContentHeight(0)
+    setIframeScrollTop(0)
     fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
     }).catch(() => setBlobSrc(project.file_url))
     return () => { revoke?.() }
   }, [project?.file_url])
+
+  useEffect(() => {
+    let rafId = 0
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'pitchsite-height' && typeof e.data.h === 'number' && e.data.h > 50) {
+        setContentHeight(e.data.h)
+      }
+      if (e.data?.type === 'pitchsite-scroll' && typeof e.data.y === 'number') {
+        cancelAnimationFrame(rafId)
+        const y = e.data.y
+        rafId = requestAnimationFrame(() => setIframeScrollTop(y))
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => { window.removeEventListener('message', handler); cancelAnimationFrame(rafId) }
+  }, [])
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -338,6 +358,7 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
             position: 'relative',
             flexShrink: 0,
             alignSelf: 'stretch',
+            overflow: 'hidden',
           }}>
             {project.file_url ? (
               blobSrc ? (
@@ -362,9 +383,14 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
               </div>
             )}
 
-            {pins.map((pin, i) => (
-              <ReadOnlyPin key={pin.id} pin={pin} number={i + 1} locale={locale} onResolve={() => resolvePin(pin.id)} />
-            ))}
+            {pins.map((pin, i) => {
+              const topPx = contentHeight > 0
+                ? (pin.y_pct / 100) * contentHeight - iframeScrollTop
+                : undefined
+              return (
+                <ReadOnlyPin key={pin.id} pin={pin} number={i + 1} locale={locale} onResolve={() => resolvePin(pin.id)} topPx={topPx} />
+              )
+            })}
           </div>
         </div>
       </div>
