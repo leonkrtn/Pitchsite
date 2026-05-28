@@ -97,8 +97,10 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [showPasswordGate, setShowPasswordGate] = useState(false)
   const [noPwSet, setNoPwSet] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
+  const [iframeHeight, setIframeHeight] = useState(900)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -161,12 +163,26 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     if (!project?.file_url || !project?.file_name) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
+    setIframeHeight(900)
     fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
     }).catch(() => setBlobSrc(project.file_url))
     return () => { revoke?.() }
   }, [project?.file_url])
+
+  const handleIframeLoad = useCallback(() => {
+    try {
+      const doc = iframeRef.current?.contentDocument
+      if (doc) {
+        const h = Math.max(
+          doc.documentElement.scrollHeight,
+          doc.body?.scrollHeight ?? 0,
+        )
+        if (h > 100) setIframeHeight(h)
+      }
+    } catch {}
+  }, [])
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
@@ -437,25 +453,25 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 position: 'relative',
                 cursor: commentMode ? 'crosshair' : 'default',
                 flexShrink: 0,
-                overflow: 'hidden',
-                alignSelf: 'stretch',
               }}
             >
               {project.file_url ? (
                 blobSrc ? (
                   <iframe
+                    ref={iframeRef}
                     src={blobSrc}
+                    onLoad={handleIframeLoad}
                     sandbox="allow-same-origin allow-scripts"
-                    style={{ width: '1280px', height: '100%', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
+                    style={{ width: '1280px', height: `${iframeHeight}px`, border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
                     title={project.name}
                   />
                 ) : (
-                  <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                  <div style={{ width: '1280px', height: `${iframeHeight}px`, minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
                     Lädt…
                   </div>
                 )
               ) : (
-                <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+                <div style={{ width: '1280px', height: `${iframeHeight}px`, minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
                   No design file uploaded
                 </div>
               )}
