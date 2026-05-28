@@ -123,8 +123,19 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         setUnlocked(true)
       } else {
         // Check server-side: is password set, is cookie already present?
-        const statusRes = await fetch(`/api/pitch/${code}/unlock`)
-        const { hasPassword, isUnlocked } = await statusRes.json()
+        // Default to locked (fail-safe) if the API call fails for any reason.
+        let hasPassword = true
+        let isUnlocked = false
+        try {
+          const statusRes = await fetch(`/api/pitch/${code}/unlock`)
+          if (statusRes.ok) {
+            const data = await statusRes.json()
+            hasPassword = data.hasPassword ?? true
+            isUnlocked = data.isUnlocked ?? false
+          }
+        } catch {
+          // Network error or bad response — show gate as fail-safe
+        }
 
         if (!hasPassword) {
           setNoPwSet(true)

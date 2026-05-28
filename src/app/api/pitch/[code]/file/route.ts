@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
-import { createAdminClient } from '@/lib/supabase-admin'
+
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } }
+  )
+}
 
 export async function GET(req: NextRequest, { params }: { params: { code: string } }) {
   const { code } = params
@@ -8,29 +16,32 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
   // Check 1: client unlocked via password (httpOnly cookie)
   const unlockCookie = req.cookies.get(`pitch_${code}`)
 
-  // Check 2: authenticated designer (bypasses cookie requirement)
+  // Check 2: authenticated designer (Supabase session cookie)
   let isDesigner = false
   if (!unlockCookie) {
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get: (name) => req.cookies.get(name)?.value,
-          set: () => {},
-          remove: () => {},
-        },
+    try {
+      const supabaseAuth = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get: (name) => req.cookies.get(name)?.value,
+            set: () => {},
+            remove: () => {},
+          },
+        }
+      )
+      const { data: { user } } = await supabaseAuth.auth.getUser()
+      if (user) {
+        const { data: proj } = await (db() as any)
+          .from('projects')
+          .select('designer_id')
+          .eq('code', code)
+          .single() as { data: { designer_id: string } | null }
+        if (proj?.designer_id === user.id) isDesigner = true
       }
-    )
-    const { data: { user } } = await supabaseAuth.auth.getUser()
-    if (user) {
-      const admin = createAdminClient()
-      const { data: proj } = await (admin as any)
-        .from('projects')
-        .select('designer_id')
-        .eq('code', code)
-        .single() as { data: { designer_id: string } | null }
-      if (proj?.designer_id === user.id) isDesigner = true
+    } catch {
+      // Auth check failed — fall through to unauthorized
     }
   }
 
@@ -38,19 +49,24 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Fetch file_url server-side — never sent to the client
-  const supabase = createAdminClient()
-  const { data: project } = await (supabase as any)
-    .from('projects')
-    .select('file_url, file_name')
-    .eq('code', code)
-    .single() as { data: { file_url: string | null; file_name: string | null } | null }
+  // Fetch file_url server-side — never exposed to the client
+  let fileUrl: string
+  try {
+    const { data: project } = await (db() as any)
+      .from('projects')
+      .select('file_url')
+      .eq('code', code)
+      .single() as { data: { file_url: string | null } | null }
 
-  if (!project?.file_url) {
-    return NextResponse.json({ error: 'No file' }, { status: 404 })
+    if (!project?.file_url) {
+      return NextResponse.json({ error: 'No file' }, { status: 404 })
+    }
+    fileUrl = project.file_url
+  } catch {
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 
-  const fileRes = await fetch(project.file_url)
+  const fileRes = await fetch(fileUrl)
   if (!fileRes.ok) {
     return NextResponse.json({ error: 'Could not fetch file' }, { status: 502 })
   }
