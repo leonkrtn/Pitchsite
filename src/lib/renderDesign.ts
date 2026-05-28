@@ -12,13 +12,15 @@ function guessMime(filename: string): string {
   return map[ext] ?? 'application/octet-stream'
 }
 
-// Injected into every design HTML — reports full content height to parent via postMessage
-// so pins can be positioned over the full design regardless of iframe origin.
+// Injected into every design HTML — reports full content height to parent via postMessage.
+// Fires on load + two delayed shots to catch font/JS-driven layout changes.
+// No ResizeObserver: changing iframeHeight from the parent would re-trigger it → infinite loop.
 const HEIGHT_SCRIPT = `<script>(function(){
-  function send(){parent.postMessage({type:'pitchsite-height',h:document.documentElement.scrollHeight},'*')}
-  window.addEventListener('load',send);
-  if(typeof ResizeObserver!=='undefined'){new ResizeObserver(send).observe(document.documentElement)}
-  setTimeout(send,500);setTimeout(send,1500);
+  function send(){
+    var h=Math.max(document.documentElement.scrollHeight,document.body?document.body.scrollHeight:0);
+    parent.postMessage({type:'pitchsite-height',h:h},'*');
+  }
+  window.addEventListener('load',function(){send();setTimeout(send,400);setTimeout(send,1200);});
 })();</script>`
 
 function injectHeightScript(html: string): string {
