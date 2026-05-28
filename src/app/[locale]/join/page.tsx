@@ -18,6 +18,7 @@ const T = {
     cta: 'Weiter',
     loading: 'Wird geprüft…',
     notFound: 'Kein Projekt mit diesem Code gefunden. Bitte überprüfe die Eingabe.',
+    noPassword: 'Dieser Pitch hat noch kein Zugangspasswort. Bitte wende dich an den Designer.',
     hint: 'Den Code bekommst du direkt von deinem Freelancer / Designer.',
     // password step
     pwTitle: 'Passwort eingeben',
@@ -37,6 +38,7 @@ const T = {
     cta: 'Continue',
     loading: 'Checking…',
     notFound: 'No project found with this code. Please check your input.',
+    noPassword: 'This pitch has no access password set yet. Please contact the designer.',
     hint: 'You receive this code directly from your freelancer / designer.',
     pwTitle: 'Enter password',
     pwSub: 'This project is password-protected.',
@@ -88,8 +90,7 @@ export default function JoinPage({ params }: { params: { locale: string } }) {
     if (project.pitch_password) {
       setStep('password')
     } else {
-      localStorage.setItem(`pitch_access_${trimmed}`, Date.now().toString())
-      router.push(`/${locale}/app/pitch/${trimmed}`)
+      setError(t.noPassword)
     }
   }
 

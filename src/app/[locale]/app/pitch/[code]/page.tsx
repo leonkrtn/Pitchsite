@@ -25,6 +25,7 @@ const T = {
     on: 'EIN', off: 'AUS',
     commentHint: 'Klicke irgendwo auf das Design um einen Kommentar zu setzen',
     commentPh: 'Dein Kommentar…',
+    namePh: 'Dein Name (optional)',
     cancel: 'Abbrechen',
     send: 'Senden',
     allComments: (n: number) => `Alle Kommentare (${n})`,
@@ -51,6 +52,7 @@ const T = {
     on: 'ON', off: 'OFF',
     commentHint: 'Click anywhere on the design to add a comment',
     commentPh: 'Your comment…',
+    namePh: 'Your name (optional)',
     cancel: 'Cancel',
     send: 'Send',
     allComments: (n: number) => `All comments (${n})`,
@@ -176,22 +178,17 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
-    if (!currentUserId) {
-      setPendingAction('comment')
-      setShowAuthModal(true)
-      return
-    }
     if (activePin) { setActivePin(null); return }
     const rect = frameRef.current!.getBoundingClientRect()
     const x = ((e.clientX - rect.left) / rect.width) * 100
     const y = ((e.clientY - rect.top) / rect.height) * 100
     setNewPin({ x, y })
     setActivePin(null)
-  }, [commentMode, activePin, currentUserId])
+  }, [commentMode, activePin])
 
-  const handleAddComment = async (text: string) => {
+  const handleAddComment = async (text: string, anonymousName?: string) => {
     if (!project || !newPin) return
-    const author = authorName || project.client_name || 'Anonym'
+    const author = authorName || anonymousName || project.client_name || 'Anonym'
 
     const { data } = await (supabase as any)
       .from('project_pins')
@@ -478,6 +475,8 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                     placeholder={t.commentPh}
                     cancelLabel={t.cancel}
                     sendLabel={t.send}
+                    showNameField={!currentUserId}
+                    namePlaceholder={t.namePh}
                   />
                 </>
               )}
@@ -864,15 +863,18 @@ function CommentPin({ pin, number, active, onClick, t }: { pin: Pin; number: num
 
 // ── NEW COMMENT POPOVER ───────────────────────────────────
 
-function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, sendLabel }: {
+function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, sendLabel, showNameField, namePlaceholder }: {
   pos: { x: number; y: number }
   onClose: () => void
-  onSubmit: (text: string) => void
+  onSubmit: (text: string, name?: string) => void
   placeholder: string
   cancelLabel: string
   sendLabel: string
+  showNameField?: boolean
+  namePlaceholder?: string
 }) {
   const [text, setText] = useState('')
+  const [name, setName] = useState('')
   const [focused, setFocused] = useState(false)
   return (
     <div onClick={e => e.stopPropagation()} style={{
@@ -881,6 +883,19 @@ function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, s
       borderRadius: '12px', padding: '16px', boxShadow: '0 8px 32px rgba(0,0,0,.15)', zIndex: 30,
       animation: 'dropIn 150ms ease-out',
     }}>
+      {showNameField && (
+        <input
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder={namePlaceholder}
+          style={{
+            width: '100%', height: '36px', border: '1.5px solid #E2E8F0',
+            borderRadius: '8px', padding: '0 12px', fontSize: '13px',
+            fontFamily: 'Inter, sans-serif', color: '#0F172A', outline: 'none',
+            marginBottom: '8px', boxSizing: 'border-box',
+          }}
+        />
+      )}
       <textarea
         autoFocus
         value={text}
@@ -896,7 +911,7 @@ function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, s
       />
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
         <Button variant="ghost" size="sm" onClick={onClose}>{cancelLabel}</Button>
-        <Button variant="primary" size="sm" onClick={() => text.trim() && onSubmit(text)}>{sendLabel}</Button>
+        <Button variant="primary" size="sm" onClick={() => text.trim() && onSubmit(text, name.trim() || undefined)}>{sendLabel}</Button>
       </div>
     </div>
   )
