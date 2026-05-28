@@ -95,9 +95,12 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [pendingAction, setPendingAction] = useState<'comment' | 'accept' | null>(null)
   const [showSetupPw, setShowSetupPw] = useState(false)
   const [showPasswordGate, setShowPasswordGate] = useState(false)
+  const [noPwSet, setNoPwSet] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
+  const [iframeHeight, setIframeHeight] = useState(900)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
 
   useEffect(() => {
     async function load() {
@@ -113,10 +116,21 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       setProject(proj)
 
-      // Password gate: always show for non-designers — never cached
       const isDesigner = user?.id === proj.designer_id
-      if ((proj as any).pitch_password && !isDesigner) {
-        setShowPasswordGate(true)
+
+      if (!isDesigner) {
+        const pw = (proj as any).pitch_password as string | null
+        if (!pw) {
+          setNoPwSet(true)
+          setLoading(false)
+          return
+        }
+        // Check sessionStorage — unlocked for this browser session already?
+        const sessionKey = `pitch_unlocked_${code}`
+        const sessionPw = typeof window !== 'undefined' ? sessionStorage.getItem(sessionKey) : null
+        if (sessionPw !== pw) {
+          setShowPasswordGate(true)
+        }
       }
 
       if (user) {
@@ -145,12 +159,26 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     if (!project?.file_url || !project?.file_name) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
+    setIframeHeight(900)
     fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
     }).catch(() => setBlobSrc(project.file_url))
     return () => { revoke?.() }
   }, [project?.file_url])
+
+  const handleIframeLoad = useCallback(() => {
+    try {
+      const doc = iframeRef.current?.contentDocument
+      if (doc) {
+        const h = Math.max(
+          doc.documentElement.scrollHeight,
+          doc.body?.scrollHeight ?? 0,
+        )
+        if (h > 100) setIframeHeight(h)
+      }
+    } catch {}
+  }, [])
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
@@ -198,12 +226,10 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     setAuthorName(name)
     setShowAuthModal(false)
 
-    // Link project to client
     if (project && project.designer_id !== userId) {
       await (supabase as any).from('projects').update({ client_user_id: userId }).eq('id', project.id)
     }
 
-    // Resume pending action
     if (pendingAction === 'accept' && project) {
       router.push(`/${locale}/app/contract/${project.code}`)
     }
@@ -226,12 +252,34 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     )
   }
 
+  if (noPwSet) {
+    const isDE = locale !== 'en'
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', padding: '24px' }}>
+        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '40px', maxWidth: '420px', width: '100%', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,.06)' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <KeyRound size={22} color="#DC2626" />
+          </div>
+          <h2 style={{ fontSize: '20px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '8px' }}>
+            {isDE ? 'Kein Zugangspasswort gesetzt' : 'No access password set'}
+          </h2>
+          <p style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B', lineHeight: 1.6 }}>
+            {isDE
+              ? 'Dieser Pitch hat noch kein Zugangspasswort. Bitte wende dich an den Designer.'
+              : 'This pitch does not have an access password yet. Please contact the designer.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   if (showPasswordGate) {
     return (
       <PasswordGate
         correctPassword={(project as any).pitch_password}
         locale={locale}
         onUnlock={() => {
+          sessionStorage.setItem(`pitch_unlocked_${code}`, (project as any).pitch_password)
           setShowPasswordGate(false)
           if (!(project as any).pitch_password_changed) setShowSetupPw(true)
         }}
@@ -271,7 +319,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         <AppLogo />
 
         {isMobile ? (
-          /* Mobile header: project name centered, comment badge right */
           <>
             <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
               <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -287,7 +334,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
             </div>
           </>
         ) : (
-          /* Desktop header */
           <>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>{project.name}</div>
@@ -340,7 +386,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       {/* Toolbar */}
       <div style={{ height: `${toolbarH}px`, background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: isMobile ? '0 16px' : '0 24px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, zIndex: 49 }}>
-        {/* Comment mode toggle — hidden in mobile preview since pins are desktop-only */}
         {previewMode === 'desktop' && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -394,7 +439,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         <div style={{ flex: 1, padding: previewMode === 'mobile' ? '32px 24px' : isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: previewMode === 'mobile' ? 'center' : 'flex-start', overflowX: isMobile && previewMode === 'desktop' ? 'auto' : 'hidden', overflowY: 'auto' }}>
 
           {previewMode === 'desktop' ? (
-            /* ── Desktop frame ── */
             <div
               ref={frameRef}
               onClick={handleFrameClick}
@@ -405,25 +449,25 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 position: 'relative',
                 cursor: commentMode ? 'crosshair' : 'default',
                 flexShrink: 0,
-                overflow: 'hidden',
-                alignSelf: 'stretch',
               }}
             >
               {project.file_url ? (
                 blobSrc ? (
                   <iframe
+                    ref={iframeRef}
                     src={blobSrc}
+                    onLoad={handleIframeLoad}
                     sandbox="allow-same-origin allow-scripts"
-                    style={{ width: '1280px', height: '100%', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
+                    style={{ width: '1280px', height: `${iframeHeight}px`, border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
                     title={project.name}
                   />
                 ) : (
-                  <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
+                  <div style={{ width: '1280px', height: `${iframeHeight}px`, minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif', fontSize: '14px' }}>
                     Lädt…
                   </div>
                 )
               ) : (
-                <div style={{ width: '1280px', height: '100%', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
+                <div style={{ width: '1280px', height: `${iframeHeight}px`, minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'Inter, sans-serif' }}>
                   No design file uploaded
                 </div>
               )}
@@ -456,7 +500,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               )}
             </div>
           ) : (
-            /* ── Mobile / Phone mockup ── */
             <div style={{
               width: '393px',
               flexShrink: 0,
@@ -473,9 +516,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               {/* Status bar */}
               <div style={{ height: '44px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0, position: 'relative' }}>
                 <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>9:41</span>
-                {/* Dynamic island */}
                 <div style={{ position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)', width: '117px', height: '34px', background: '#1C1C1E', borderRadius: '20px' }} />
-                {/* Battery + signal */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
                     <rect x="0" y="1" width="13" height="8" rx="2" stroke="#0F172A" strokeWidth="1.2"/>
@@ -485,7 +526,6 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 </div>
               </div>
 
-              {/* Screen — iframe scrolls inside */}
               <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
                 {project.file_url ? (
                   blobSrc ? (
@@ -516,7 +556,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         </div>
       </div>
 
-      {/* Mobile fixed bottom bar — Accept button */}
+      {/* Mobile fixed bottom bar */}
       {isMobile && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: '#fff', borderTop: '1px solid #E2E8F0', zIndex: 50, display: 'flex', gap: '10px' }}>
           <Button variant="primary" fullWidth loading={acceptLoading} onClick={handleAccept} style={{ height: '44px', fontSize: '14px' }}>
@@ -743,7 +783,6 @@ function AuthModal({ t, onClose, onSuccess }: {
           </button>
         </div>
 
-        {/* Tabs */}
         <div style={{ display: 'flex', gap: '4px', background: '#F8FAFC', borderRadius: '8px', padding: '4px', marginBottom: '20px' }}>
           {(['signup', 'login'] as const).map(tp => (
             <button
@@ -848,7 +887,10 @@ function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, s
   namePlaceholder?: string
 }) {
   const [text, setText] = useState('')
-  const [name, setName] = useState('')
+  const [name, setName] = useState(() => {
+    if (typeof window === 'undefined') return ''
+    return localStorage.getItem('commenter_name') ?? ''
+  })
   const [focused, setFocused] = useState(false)
   return (
     <div onClick={e => e.stopPropagation()} style={{
@@ -860,7 +902,10 @@ function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, s
       {showNameField && (
         <input
           value={name}
-          onChange={e => setName(e.target.value)}
+          onChange={e => {
+            setName(e.target.value)
+            localStorage.setItem('commenter_name', e.target.value)
+          }}
           placeholder={namePlaceholder}
           style={{
             width: '100%', height: '36px', border: '1.5px solid #E2E8F0',
