@@ -88,6 +88,14 @@ create policy revisions_read   on public.project_revisions for select using (tru
 create policy revisions_insert on public.project_revisions for insert with check (true);
 create policy revisions_update on public.project_revisions for update using (true);
 
--- ── Realtime ────────────────────────────────────────────────
-alter publication supabase_realtime add table public.project_annotations;
-alter publication supabase_realtime add table public.project_revisions;
+-- ── Realtime (idempotent: skip if already a publication member) ──
+do $$
+begin
+  alter publication supabase_realtime add table public.project_annotations;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.project_revisions;
+exception when duplicate_object then null;
+end $$;
