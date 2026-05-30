@@ -2,17 +2,20 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { MessageCircle, X, MousePointer, LogIn, UserPlus, KeyRound, Monitor, Smartphone } from 'lucide-react'
+import { MessageCircle, X, MousePointer, LogIn, UserPlus, KeyRound, Monitor, Smartphone, PackageCheck, Check, RotateCcw } from 'lucide-react'
 import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
 import { fetchAndRenderDesign } from '@/lib/renderDesign'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { ChatWidget } from '@/components/app/ChatWidget'
+import { WorkflowStepper, WorkflowStageChip } from '@/components/app/WorkflowStepper'
+import { AnnotationCanvas, Annotation } from '@/components/app/annotations'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
 type Pin = Database['public']['Tables']['project_pins']['Row']
+type Revision = Database['public']['Tables']['project_revisions']['Row']
 
 const T = {
   de: {
@@ -25,7 +28,6 @@ const T = {
     on: 'EIN', off: 'AUS',
     commentHint: 'Klicke irgendwo auf das Design um einen Kommentar zu setzen',
     commentPh: 'Dein Kommentar…',
-    namePh: 'Dein Name (optional)',
     cancel: 'Abbrechen',
     send: 'Senden',
     allComments: (n: number) => `Alle Kommentare (${n})`,
@@ -41,6 +43,19 @@ const T = {
     loginBtn: 'Anmelden',
     signupBtn: 'Konto erstellen',
     authError: 'Fehler bei der Anmeldung. Bitte überprüfe deine Eingaben.',
+    designerNotes: 'Anmerkungen des Designers',
+    deliveryTitle: 'Finale Abgabe ist da',
+    deliverySub: 'Dein Designer hat das Projekt abgeliefert. Prüfe die Abgabe und nimm sie ab — oder fordere Änderungen an.',
+    acceptDelivery: '✓ Abgabe annehmen',
+    requestChanges: 'Änderung anfordern',
+    accepting: 'Wird angenommen…',
+    requestTitle: 'Änderung anfordern',
+    requestSub: 'Beschreibe, was noch angepasst werden soll. Dein Designer erhält deinen Wunsch direkt im Arbeitsbereich.',
+    requestPh: 'z. B. „Bitte den Header etwas kompakter und die Akzentfarbe dunkler."',
+    requestSubmit: 'Änderung senden',
+    completedTitle: 'Projekt abgeschlossen',
+    completedSub: 'Du hast die Abgabe abgenommen. Der Betrag wird an den Designer ausgezahlt.',
+    inProgressNote: 'Dein Designer arbeitet gerade am Projekt. Du wirst benachrichtigt, sobald die finale Abgabe da ist.',
   },
   en: {
     by: 'by',
@@ -52,7 +67,6 @@ const T = {
     on: 'ON', off: 'OFF',
     commentHint: 'Click anywhere on the design to add a comment',
     commentPh: 'Your comment…',
-    namePh: 'Your name (optional)',
     cancel: 'Cancel',
     send: 'Send',
     allComments: (n: number) => `All comments (${n})`,
@@ -68,6 +82,19 @@ const T = {
     loginBtn: 'Log in',
     signupBtn: 'Create account',
     authError: 'Login failed. Please check your details.',
+    designerNotes: 'Designer notes',
+    deliveryTitle: 'Final delivery is here',
+    deliverySub: 'Your designer delivered the project. Review the hand-off and approve it — or request changes.',
+    acceptDelivery: '✓ Approve delivery',
+    requestChanges: 'Request changes',
+    accepting: 'Approving…',
+    requestTitle: 'Request changes',
+    requestSub: 'Describe what still needs adjusting. Your designer receives your request directly in their workspace.',
+    requestPh: 'e.g. “Please make the header more compact and the accent colour darker.”',
+    requestSubmit: 'Send request',
+    completedTitle: 'Project completed',
+    completedSub: 'You approved the delivery. The amount is being paid out to the designer.',
+    inProgressNote: 'Your designer is working on the project. You will be notified once the final delivery is ready.',
   },
 }
 
@@ -95,59 +122,53 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [pendingAction, setPendingAction] = useState<'comment' | 'accept' | null>(null)
   const [showSetupPw, setShowSetupPw] = useState(false)
   const [showPasswordGate, setShowPasswordGate] = useState(false)
-  const [noPwSet, setNoPwSet] = useState(false)
-  const [unlocked, setUnlocked] = useState(false)
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
-  const [contentHeight, setContentHeight] = useState(0)
-  const [iframeScrollTop, setIframeScrollTop] = useState(0)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
 
+  const [sharedAnnotations, setSharedAnnotations] = useState<Annotation[]>([])
+  const [selectedShared, setSelectedShared] = useState<string | null>(null)
+  const [showRequest, setShowRequest] = useState(false)
+  const [requestNote, setRequestNote] = useState('')
+  const [acting, setActing] = useState(false)
+
   useEffect(() => {
     async function load() {
+      // Check access: must have either localStorage entry or be the owner/client
+      const hasLocalAccess = typeof window !== 'undefined' && !!localStorage.getItem(`pitch_access_${code}`)
       const { data: { user } } = await supabase.auth.getUser()
+
+      if (!hasLocalAccess && !user) {
+        router.replace(`/${locale}/join`)
+        return
+      }
 
       const { data: proj } = await (supabase as any)
         .from('projects')
-        .select('id, designer_id, name, code, file_name, status, client_name, client_email, client_user_id, pitch_password_changed, created_at, amount, description, delivery_date')
+        .select('*')
         .eq('code', code)
         .single() as { data: Project | null }
 
       if (!proj) { setLoading(false); return }
 
-      setProject(proj)
-
-      const isDesigner = user?.id === proj.designer_id
-
-      if (isDesigner) {
-        setUnlocked(true)
-      } else {
-        // Check server-side: is password set, is cookie already present?
-        // Default to locked (fail-safe) if the API call fails for any reason.
-        let hasPassword = true
-        let isUnlocked = false
-        try {
-          const statusRes = await fetch(`/api/pitch/${code}/unlock`)
-          if (statusRes.ok) {
-            const data = await statusRes.json()
-            hasPassword = data.hasPassword ?? true
-            isUnlocked = data.isUnlocked ?? false
-          }
-        } catch {
-          // Network error or bad response — show gate as fail-safe
-        }
-
-        if (!hasPassword) {
-          setNoPwSet(true)
-          setLoading(false)
+      // If accessed via URL directly (no localStorage), verify user is owner or client
+      if (!hasLocalAccess && user) {
+        const isOwner = proj.designer_id === user.id
+        const isClient = (proj as any).client_user_id === user.id
+        if (!isOwner && !isClient) {
+          router.replace(`/${locale}/join`)
           return
         }
+      }
 
-        if (isUnlocked) {
-          setUnlocked(true)
-        } else {
-          setShowPasswordGate(true)
-        }
+      setProject(proj)
+
+      // Password gate: show for non-designers whose cached password doesn't match current
+      const isDesigner = user?.id === proj.designer_id
+      const storedPw = typeof window !== 'undefined' ? localStorage.getItem(`pitch_unlocked_${code}`) : null
+      const isUnlocked = storedPw !== null && storedPw === (proj as any).pitch_password
+      if ((proj as any).pitch_password && !isDesigner && !isUnlocked) {
+        setShowPasswordGate(true)
       }
 
       if (user) {
@@ -155,6 +176,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         const { data: profile } = await (supabase as any).from('profiles').select('name').eq('id', user.id).single() as { data: { name: string } | null }
         if (profile?.name) setAuthorName(profile.name)
 
+        // Link project to client if not yet linked and user is not the designer
         if (!(proj as any).client_user_id && proj.designer_id !== user.id) {
           await (supabase as any).from('projects').update({ client_user_id: user.id }).eq('id', proj.id)
         }
@@ -167,61 +189,53 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         .order('created_at', { ascending: true }) as { data: Pin[] | null }
 
       setPins(pinData ?? [])
+
+      const { data: annData } = await (supabase as any)
+        .from('project_annotations')
+        .select('*')
+        .eq('project_id', proj.id)
+        .eq('visibility', 'shared')
+        .order('created_at', { ascending: true }) as { data: Annotation[] | null }
+      setSharedAnnotations(annData ?? [])
+
       setLoading(false)
+
+      if (searchParams.get('setup') === '1') {
+        setShowSetupPw(true)
+      }
     }
     load()
   }, [code])
 
   useEffect(() => {
-    if (!project?.file_name || !unlocked) return
+    if (!project?.file_url || !project?.file_name) return
     let revoke: (() => void) | null = null
     setBlobSrc(null)
-    setContentHeight(0)
-    setIframeScrollTop(0)
-    const proxyUrl = `/api/pitch/${code}/file`
-    fetchAndRenderDesign(proxyUrl, project.file_name).then(({ src, revoke: rv }) => {
+    fetchAndRenderDesign(project.file_url, project.file_name).then(({ src, revoke: rv }) => {
       setBlobSrc(src)
       revoke = rv
-    }).catch(() => setBlobSrc(proxyUrl))
+    }).catch(() => setBlobSrc(project.file_url))
     return () => { revoke?.() }
-  }, [project?.id, unlocked])
-
-  // Listen for height and scroll reports from the injected script inside the design iframe.
-  // RAF throttle on scroll ensures we update at most once per animation frame.
-  useEffect(() => {
-    let rafId = 0
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'pitchsite-height' && typeof e.data.h === 'number' && e.data.h > 50) {
-        setContentHeight(e.data.h)
-      }
-      if (e.data?.type === 'pitchsite-scroll' && typeof e.data.y === 'number') {
-        cancelAnimationFrame(rafId)
-        const y = e.data.y
-        rafId = requestAnimationFrame(() => setIframeScrollTop(y))
-      }
-    }
-    window.addEventListener('message', handler)
-    return () => { window.removeEventListener('message', handler); cancelAnimationFrame(rafId) }
-  }, [])
+  }, [project?.file_url])
 
   const handleFrameClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!commentMode) return
+    if (!currentUserId) {
+      setPendingAction('comment')
+      setShowAuthModal(true)
+      return
+    }
     if (activePin) { setActivePin(null); return }
     const rect = frameRef.current!.getBoundingClientRect()
-    const xInFrame = e.clientX - rect.left
-    const yInFrame = e.clientY - rect.top
-    const x = (xInFrame / rect.width) * 100
-    const yInContent = yInFrame + iframeScrollTop
-    const y = contentHeight > 0
-      ? (yInContent / contentHeight) * 100
-      : (yInFrame / rect.height) * 100
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
     setNewPin({ x, y })
     setActivePin(null)
-  }, [commentMode, activePin, iframeScrollTop, contentHeight])
+  }, [commentMode, activePin, currentUserId])
 
-  const handleAddComment = async (text: string, anonymousName?: string) => {
+  const handleAddComment = async (text: string) => {
     if (!project || !newPin) return
-    const author = authorName || anonymousName || project.client_name || 'Anonym'
+    const author = authorName || project.client_name || 'Anonym'
 
     const { data } = await (supabase as any)
       .from('project_pins')
@@ -255,14 +269,41 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     setAuthorName(name)
     setShowAuthModal(false)
 
+    // Link project to client
     if (project && project.designer_id !== userId) {
       await (supabase as any).from('projects').update({ client_user_id: userId }).eq('id', project.id)
     }
 
+    // Resume pending action
     if (pendingAction === 'accept' && project) {
       router.push(`/${locale}/app/contract/${project.code}`)
     }
     setPendingAction(null)
+  }
+
+  const acceptDelivery = async () => {
+    if (!project) return
+    if (!currentUserId) { setShowAuthModal(true); return }
+    setActing(true)
+    const now = new Date().toISOString()
+    await (supabase as any).from('projects').update({ status: 'abgeschlossen', approved_at: now }).eq('id', project.id)
+    setProject(prev => prev ? { ...prev, status: 'abgeschlossen', approved_at: now } as any : prev)
+    setActing(false)
+  }
+
+  const requestChanges = async () => {
+    if (!project || !requestNote.trim()) return
+    setActing(true)
+    const round = ((project as any).revision_round ?? 0) + 1
+    await (supabase as any).from('project_revisions').insert({
+      project_id: project.id, round_number: round, note: requestNote.trim(),
+      requested_by: authorName || project.client_name || 'Kunde', status: 'open',
+    })
+    await (supabase as any).from('projects').update({ status: 'escrow', revision_round: round }).eq('id', project.id)
+    setProject(prev => prev ? { ...prev, status: 'escrow', revision_round: round } as any : prev)
+    setActing(false)
+    setShowRequest(false)
+    setRequestNote('')
   }
 
   if (loading) {
@@ -281,35 +322,15 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     )
   }
 
-  if (noPwSet) {
-    const isDE = locale !== 'en'
-    return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC', padding: '24px' }}>
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '40px', maxWidth: '420px', width: '100%', textAlign: 'center', boxShadow: '0 4px 24px rgba(0,0,0,.06)' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-            <KeyRound size={22} color="#DC2626" />
-          </div>
-          <h2 style={{ fontSize: '20px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '8px' }}>
-            {isDE ? 'Kein Zugangspasswort gesetzt' : 'No access password set'}
-          </h2>
-          <p style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B', lineHeight: 1.6 }}>
-            {isDE
-              ? 'Dieser Pitch hat noch kein Zugangspasswort. Bitte wende dich an den Designer.'
-              : 'This pitch does not have an access password yet. Please contact the designer.'}
-          </p>
-        </div>
-      </div>
-    )
-  }
-
   if (showPasswordGate) {
     return (
       <PasswordGate
-        code={code}
+        correctPassword={(project as any).pitch_password}
         locale={locale}
         onUnlock={() => {
+          localStorage.setItem(`pitch_unlocked_${code}`, (project as any).pitch_password)
+          localStorage.setItem(`pitch_access_${code}`, '1')
           setShowPasswordGate(false)
-          setUnlocked(true)
           if (!(project as any).pitch_password_changed) setShowSetupPw(true)
         }}
       />
@@ -343,11 +364,31 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         />
       )}
 
+      {/* Request changes modal */}
+      {showRequest && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={() => setShowRequest(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '18px', padding: '30px', maxWidth: '440px', width: '100%', boxShadow: '0 30px 90px rgba(0,0,0,.35)', animation: 'dropIn 200ms ease-out' }}>
+            <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '18px' }}>
+              <RotateCcw size={22} color="#D97706" />
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '8px' }}>{t.requestTitle}</div>
+            <p style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B', lineHeight: 1.6, marginBottom: '20px' }}>{t.requestSub}</p>
+            <textarea value={requestNote} onChange={e => setRequestNote(e.target.value)} placeholder={t.requestPh} rows={4} autoFocus
+              style={{ width: '100%', border: '1.5px solid #E2E8F0', borderRadius: '10px', padding: '11px 13px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#0F172A', outline: 'none', resize: 'vertical', minHeight: '96px', marginBottom: '22px', boxSizing: 'border-box', lineHeight: 1.5 }} />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <Button variant="primary" fullWidth loading={acting} disabled={!requestNote.trim()} icon={<RotateCcw size={15} />} onClick={requestChanges}>{t.requestSubmit}</Button>
+              <Button variant="ghost" onClick={() => setShowRequest(false)}>{t.cancel}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ height: `${headerH}px`, background: '#fff', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 16px' : '0 24px', flexShrink: 0, zIndex: 50 }}>
         <AppLogo />
 
         {isMobile ? (
+          /* Mobile header: project name centered, comment badge right */
           <>
             <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' }}>
               <div style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -363,6 +404,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
             </div>
           </>
         ) : (
+          /* Desktop header */
           <>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '14px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>{project.name}</div>
@@ -380,6 +422,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                   {pins.length} {t.comments}
                 </span>
               </div>
+              {project.status === 'offen' ? (
               <div
                 style={{ position: 'relative' }}
                 onMouseEnter={() => setAcceptHov(true)}
@@ -408,13 +451,53 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                   </Button>
                 </div>
               </div>
+              ) : (
+                <WorkflowStageChip status={project.status as any} locale={locale} />
+              )}
             </div>
           </>
         )}
       </div>
 
+      {/* Workflow progress + contextual actions */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: isMobile ? '12px 16px' : '14px 24px', flexShrink: 0, zIndex: 48 }}>
+        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+          <WorkflowStepper status={project.status as any} locale={locale} size={isMobile ? 22 : 26} />
+        </div>
+
+        {project.status === 'abgeliefert' && (
+          <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', background: '#F0FDFA', border: '1px solid #99F6E4', borderRadius: '12px', padding: isMobile ? '14px' : '16px 18px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '11px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+              <PackageCheck size={20} color="#0F766E" />
+            </div>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>{t.deliveryTitle}</div>
+              <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#475569', marginTop: '2px', lineHeight: 1.45 }}>
+                {(project as any).delivery_note || t.deliverySub}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+              <Button variant="secondary" icon={<RotateCcw size={15} />} onClick={() => setShowRequest(true)}>{t.requestChanges}</Button>
+              <Button variant="primary" loading={acting} onClick={acceptDelivery}>{t.acceptDelivery}</Button>
+            </div>
+          </div>
+        )}
+        {(project.status === 'escrow' || project.status === 'ausstehend') && (
+          <div style={{ marginTop: '12px', maxWidth: '760px', margin: '12px auto 0', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8B5CF6', flexShrink: 0 }} />
+            {t.inProgressNote}
+          </div>
+        )}
+        {project.status === 'abgeschlossen' && (
+          <div style={{ marginTop: '12px', maxWidth: '760px', margin: '12px auto 0', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#16A34A' }}>
+            <Check size={15} /> {t.completedTitle} — {t.completedSub}
+          </div>
+        )}
+      </div>
+
       {/* Toolbar */}
       <div style={{ height: `${toolbarH}px`, background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', padding: isMobile ? '0 16px' : '0 24px', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0, zIndex: 49 }}>
+        {/* Comment mode toggle — hidden in mobile preview since pins are desktop-only */}
         {previewMode === 'desktop' && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -465,9 +548,10 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
       {/* Viewport */}
       <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', position: 'relative', display: 'flex', flexDirection: 'column', marginBottom: `${bottomBarH}px` }}>
-        <div style={{ flex: 1, minHeight: 0, padding: previewMode === 'mobile' ? '32px 24px' : isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: previewMode === 'mobile' ? 'center' : 'flex-start', overflowX: isMobile && previewMode === 'desktop' ? 'auto' : 'hidden', overflowY: 'auto' }}>
+        <div style={{ flex: 1, padding: previewMode === 'mobile' ? '32px 24px' : isMobile ? '16px' : '40px', display: 'flex', justifyContent: 'center', alignItems: previewMode === 'mobile' ? 'center' : 'flex-start', overflowX: isMobile && previewMode === 'desktop' ? 'auto' : 'hidden', overflowY: 'auto' }}>
 
           {previewMode === 'desktop' ? (
+            /* ── Desktop frame ── */
             <div
               ref={frameRef}
               onClick={handleFrameClick}
@@ -478,11 +562,11 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 position: 'relative',
                 cursor: commentMode ? 'crosshair' : 'default',
                 flexShrink: 0,
-                alignSelf: 'stretch',
                 overflow: 'hidden',
+                alignSelf: 'stretch',
               }}
             >
-              {project.file_name ? (
+              {project.file_url ? (
                 blobSrc ? (
                   <iframe
                     src={blobSrc}
@@ -501,52 +585,42 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 </div>
               )}
 
-              {pins.map((pin, i) => {
-                const topPx = contentHeight > 0
-                  ? (pin.y_pct / 100) * contentHeight - iframeScrollTop
-                  : undefined
-                return (
-                  <CommentPin
-                    key={pin.id}
-                    pin={pin}
-                    number={i + 1}
-                    active={activePin === pin.id}
-                    onClick={() => setActivePin(activePin === pin.id ? null : pin.id)}
-                    t={t}
-                    topPx={topPx}
-                  />
-                )
-              })}
+              {pins.map((pin, i) => (
+                <CommentPin
+                  key={pin.id}
+                  pin={pin}
+                  number={i + 1}
+                  active={activePin === pin.id}
+                  onClick={() => setActivePin(activePin === pin.id ? null : pin.id)}
+                  t={t}
+                />
+              ))}
 
-              {newPin && commentMode && (() => {
-                const newPinTopPx = contentHeight > 0
-                  ? (newPin.y / 100) * contentHeight - iframeScrollTop
-                  : undefined
-                return (
-                  <>
-                    <div style={{
-                      position: 'absolute',
-                      left: `${newPin.x}%`,
-                      top: newPinTopPx !== undefined ? `${newPinTopPx}px` : `${newPin.y}%`,
-                      width: '28px', height: '28px', borderRadius: '50% 50% 50% 0',
-                      background: 'rgba(29,78,216,.6)', border: '2px solid #fff', zIndex: 10,
-                    }} />
-                    <NewCommentPopover
-                      pos={newPin}
-                      topPx={newPinTopPx}
-                      onClose={() => setNewPin(null)}
-                      onSubmit={handleAddComment}
-                      placeholder={t.commentPh}
-                      cancelLabel={t.cancel}
-                      sendLabel={t.send}
-                      showNameField={!currentUserId}
-                      namePlaceholder={t.namePh}
-                    />
-                  </>
-                )
-              })()}
+              {/* Designer's shared annotations (read-only) */}
+              {sharedAnnotations.length > 0 && (
+                <AnnotationCanvas
+                  annotations={sharedAnnotations} editable={false} tool="select" color="#1D4ED8" visibility="shared"
+                  selectedId={selectedShared} onCreate={() => {}} onSelect={setSelectedShared}
+                  onUpdate={() => {}} onDelete={() => {}} locale={locale}
+                />
+              )}
+
+              {newPin && commentMode && (
+                <>
+                  <div style={{ position: 'absolute', left: `${newPin.x}%`, top: `${newPin.y}%`, width: '28px', height: '28px', borderRadius: '50% 50% 50% 0', background: 'rgba(29,78,216,.6)', border: '2px solid #fff', zIndex: 10 }} />
+                  <NewCommentPopover
+                    pos={newPin}
+                    onClose={() => setNewPin(null)}
+                    onSubmit={handleAddComment}
+                    placeholder={t.commentPh}
+                    cancelLabel={t.cancel}
+                    sendLabel={t.send}
+                  />
+                </>
+              )}
             </div>
           ) : (
+            /* ── Mobile / Phone mockup ── */
             <div style={{
               width: '393px',
               flexShrink: 0,
@@ -563,7 +637,9 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               {/* Status bar */}
               <div style={{ height: '44px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0, position: 'relative' }}>
                 <span style={{ fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#0F172A' }}>9:41</span>
+                {/* Dynamic island */}
                 <div style={{ position: 'absolute', top: '8px', left: '50%', transform: 'translateX(-50%)', width: '117px', height: '34px', background: '#1C1C1E', borderRadius: '20px' }} />
+                {/* Battery + signal */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
                     <rect x="0" y="1" width="13" height="8" rx="2" stroke="#0F172A" strokeWidth="1.2"/>
@@ -573,8 +649,9 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 </div>
               </div>
 
+              {/* Screen — iframe scrolls inside */}
               <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
-                {project.file_name ? (
+                {project.file_url ? (
                   blobSrc ? (
                     <iframe
                       src={blobSrc}
@@ -603,12 +680,19 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         </div>
       </div>
 
-      {/* Mobile fixed bottom bar */}
-      {isMobile && (
+      {/* Mobile fixed bottom bar — Accept button (initial pitch only) */}
+      {isMobile && project.status === 'offen' && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: '#fff', borderTop: '1px solid #E2E8F0', zIndex: 50, display: 'flex', gap: '10px' }}>
           <Button variant="primary" fullWidth loading={acceptLoading} onClick={handleAccept} style={{ height: '44px', fontSize: '14px' }}>
             {t.accept}
           </Button>
+        </div>
+      )}
+      {/* Mobile fixed bottom bar — Delivery approval */}
+      {isMobile && project.status === 'abgeliefert' && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: '#fff', borderTop: '1px solid #E2E8F0', zIndex: 50, display: 'flex', gap: '10px' }}>
+          <Button variant="secondary" icon={<RotateCcw size={15} />} onClick={() => setShowRequest(true)} style={{ height: '44px' }}>{t.requestChanges}</Button>
+          <Button variant="primary" fullWidth loading={acting} onClick={acceptDelivery} style={{ height: '44px', fontSize: '14px' }}>{t.acceptDelivery}</Button>
         </div>
       )}
 
@@ -642,14 +726,13 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
 // ── PASSWORD GATE ─────────────────────────────────────────
 
-function PasswordGate({ code, onUnlock, locale }: {
-  code: string
+function PasswordGate({ correctPassword, onUnlock, locale }: {
+  correctPassword: string
   onUnlock: () => void
   locale: string
 }) {
   const [input, setInput] = useState('')
   const [error, setError] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState(false)
   const isDE = locale !== 'en'
 
@@ -663,17 +746,8 @@ function PasswordGate({ code, onUnlock, locale }: {
     errorMsg: isDE ? 'Falsches Passwort. Bitte nochmal versuchen.' : 'Wrong password. Please try again.',
   }
 
-  const submit = async () => {
-    if (!input || loading) return
-    setLoading(true)
-    setError(false)
-    const res = await fetch(`/api/pitch/${code}/unlock`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: input }),
-    })
-    setLoading(false)
-    if (res.ok) {
+  const submit = () => {
+    if (input === correctPassword) {
       onUnlock()
     } else {
       setError(true)
@@ -719,17 +793,17 @@ function PasswordGate({ code, onUnlock, locale }: {
         </div>
         <button
           onClick={submit}
-          disabled={!input || loading}
+          disabled={!input}
           style={{
-            width: '100%', height: '48px', background: input && !loading ? '#1D4ED8' : '#E2E8F0',
-            color: input && !loading ? '#fff' : '#94A3B8', border: 'none', borderRadius: '12px',
+            width: '100%', height: '48px', background: input ? '#1D4ED8' : '#E2E8F0',
+            color: input ? '#fff' : '#94A3B8', border: 'none', borderRadius: '12px',
             fontSize: '15px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
-            cursor: input && !loading ? 'pointer' : 'not-allowed', transition: 'background 150ms, color 150ms',
+            cursor: input ? 'pointer' : 'not-allowed', transition: 'background 150ms, color 150ms',
           }}
-          onMouseEnter={e => { if (input && !loading) e.currentTarget.style.background = '#1E40AF' }}
-          onMouseLeave={e => { if (input && !loading) e.currentTarget.style.background = '#1D4ED8' }}
+          onMouseEnter={e => { if (input) e.currentTarget.style.background = '#1E40AF' }}
+          onMouseLeave={e => { if (input) e.currentTarget.style.background = '#1D4ED8' }}
         >
-          {loading ? '…' : labels.cta}
+          {labels.cta}
         </button>
       </div>
     </div>
@@ -840,6 +914,7 @@ function AuthModal({ t, onClose, onSuccess }: {
           </button>
         </div>
 
+        {/* Tabs */}
         <div style={{ display: 'flex', gap: '4px', background: '#F8FAFC', borderRadius: '8px', padding: '4px', marginBottom: '20px' }}>
           {(['signup', 'login'] as const).map(tp => (
             <button
@@ -887,11 +962,11 @@ function ToggleSwitch({ on, onChange }: { on: boolean; onChange: (v: boolean) =>
 
 // ── COMMENT PIN ───────────────────────────────────────────
 
-function CommentPin({ pin, number, active, onClick, t, topPx }: { pin: Pin; number: number; active: boolean; onClick: () => void; t: typeof T.de; topPx?: number }) {
+function CommentPin({ pin, number, active, onClick, t }: { pin: Pin; number: number; active: boolean; onClick: () => void; t: typeof T.de }) {
   const [hov, setHov] = useState(false)
   const initials = pin.author.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
   return (
-    <div style={{ position: 'absolute', left: `${pin.x_pct}%`, top: topPx !== undefined ? `${topPx}px` : `${pin.y_pct}%`, zIndex: 10 }}>
+    <div style={{ position: 'absolute', left: `${pin.x_pct}%`, top: `${pin.y_pct}%`, zIndex: 10 }}>
       <div
         onClick={e => { e.stopPropagation(); onClick() }}
         onMouseEnter={() => setHov(true)}
@@ -933,47 +1008,23 @@ function CommentPin({ pin, number, active, onClick, t, topPx }: { pin: Pin; numb
 
 // ── NEW COMMENT POPOVER ───────────────────────────────────
 
-function NewCommentPopover({ pos, topPx, onClose, onSubmit, placeholder, cancelLabel, sendLabel, showNameField, namePlaceholder }: {
+function NewCommentPopover({ pos, onClose, onSubmit, placeholder, cancelLabel, sendLabel }: {
   pos: { x: number; y: number }
-  topPx?: number
   onClose: () => void
-  onSubmit: (text: string, name?: string) => void
+  onSubmit: (text: string) => void
   placeholder: string
   cancelLabel: string
   sendLabel: string
-  showNameField?: boolean
-  namePlaceholder?: string
 }) {
   const [text, setText] = useState('')
-  const [name, setName] = useState(() => {
-    if (typeof window === 'undefined') return ''
-    return localStorage.getItem('commenter_name') ?? ''
-  })
   const [focused, setFocused] = useState(false)
-  const topStyle = topPx !== undefined ? `calc(${topPx}px - 8px)` : `calc(${pos.y}% - 8px)`
   return (
     <div onClick={e => e.stopPropagation()} style={{
-      position: 'absolute', left: `calc(${pos.x}% + 32px)`, top: topStyle,
+      position: 'absolute', left: `calc(${pos.x}% + 32px)`, top: `calc(${pos.y}% - 8px)`,
       width: '300px', background: '#fff', border: '1px solid #E2E8F0',
       borderRadius: '12px', padding: '16px', boxShadow: '0 8px 32px rgba(0,0,0,.15)', zIndex: 30,
       animation: 'dropIn 150ms ease-out',
     }}>
-      {showNameField && (
-        <input
-          value={name}
-          onChange={e => {
-            setName(e.target.value)
-            localStorage.setItem('commenter_name', e.target.value)
-          }}
-          placeholder={namePlaceholder}
-          style={{
-            width: '100%', height: '36px', border: '1.5px solid #E2E8F0',
-            borderRadius: '8px', padding: '0 12px', fontSize: '13px',
-            fontFamily: 'Inter, sans-serif', color: '#0F172A', outline: 'none',
-            marginBottom: '8px', boxSizing: 'border-box',
-          }}
-        />
-      )}
       <textarea
         autoFocus
         value={text}
@@ -989,7 +1040,7 @@ function NewCommentPopover({ pos, topPx, onClose, onSubmit, placeholder, cancelL
       />
       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
         <Button variant="ghost" size="sm" onClick={onClose}>{cancelLabel}</Button>
-        <Button variant="primary" size="sm" onClick={() => text.trim() && onSubmit(text, name.trim() || undefined)}>{sendLabel}</Button>
+        <Button variant="primary" size="sm" onClick={() => text.trim() && onSubmit(text)}>{sendLabel}</Button>
       </div>
     </div>
   )
