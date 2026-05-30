@@ -37,6 +37,9 @@ export interface Database {
           archived: boolean
           pitch_password: string | null
           pitch_password_changed: boolean
+          delivery_note: string | null
+          approved_at: string | null
+          revision_round: number
         }
         Insert: {
           designer_id: string
@@ -149,6 +152,103 @@ export interface Database {
           message: string
         }
         Update: Record<string, never>
+      }
+      project_annotations: {
+        Row: {
+          id: string
+          project_id: string
+          author_id: string | null
+          kind: 'pin' | 'box' | 'draw' | 'callout'
+          visibility: 'private' | 'shared'
+          x_pct: number
+          y_pct: number
+          w_pct: number | null
+          h_pct: number | null
+          path: { x: number; y: number }[] | null
+          color: string
+          text: string | null
+          resolved: boolean
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          author_id?: string | null
+          kind?: 'pin' | 'box' | 'draw' | 'callout'
+          visibility?: 'private' | 'shared'
+          x_pct?: number
+          y_pct?: number
+          w_pct?: number | null
+          h_pct?: number | null
+          path?: { x: number; y: number }[] | null
+          color?: string
+          text?: string | null
+          resolved?: boolean
+        }
+        Update: {
+          visibility?: 'private' | 'shared'
+          color?: string
+          text?: string | null
+          resolved?: boolean
+          x_pct?: number
+          y_pct?: number
+          w_pct?: number | null
+          h_pct?: number | null
+        }
+      }
+      project_tasks: {
+        Row: {
+          id: string
+          project_id: string
+          title: string
+          done: boolean
+          position: number
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          title: string
+          done?: boolean
+          position?: number
+        }
+        Update: { title?: string; done?: boolean; position?: number }
+      }
+      project_versions: {
+        Row: {
+          id: string
+          project_id: string
+          version_number: number
+          file_url: string
+          file_name: string
+          note: string | null
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          version_number?: number
+          file_url: string
+          file_name: string
+          note?: string | null
+        }
+        Update: Record<string, never>
+      }
+      project_revisions: {
+        Row: {
+          id: string
+          project_id: string
+          round_number: number
+          note: string
+          requested_by: string | null
+          status: 'open' | 'resolved'
+          created_at: string
+        }
+        Insert: {
+          project_id: string
+          round_number?: number
+          note: string
+          requested_by?: string | null
+          status?: 'open' | 'resolved'
+        }
+        Update: { status?: 'open' | 'resolved' }
       }
     }
   }

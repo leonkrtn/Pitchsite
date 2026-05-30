@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, Calendar, Euro, ChevronRight, Check, Clock, CircleDot } from 'lucide-react'
+import { Eye, Calendar, Euro, ChevronRight, Check, Clock, CircleDot, ClipboardCheck } from 'lucide-react'
 import { NavbarDashboard } from '@/components/app/AppNavbar'
 import { Badge } from '@/components/app/ds'
+import { WorkflowStepper } from '@/components/app/WorkflowStepper'
 import { createBrowserClient } from '@/lib/supabase'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
@@ -23,8 +24,10 @@ const T = {
       offen: 'Warte auf deine Rückmeldung',
       ausstehend: 'Zahlung ausstehend',
       escrow: 'Betrag gesichert – Lieferung läuft',
+      abgeliefert: 'Abnahme nötig – bitte prüfen',
       abgeschlossen: 'Abgeschlossen',
     },
+    approveCta: 'Prüfen & abnehmen',
   },
   en: {
     title: 'My projects',
@@ -40,8 +43,10 @@ const T = {
       offen: 'Waiting for your response',
       ausstehend: 'Payment pending',
       escrow: 'Amount secured – delivery in progress',
+      abgeliefert: 'Approval needed – please review',
       abgeschlossen: 'Completed',
     },
+    approveCta: 'Review & approve',
   },
 }
 
@@ -49,6 +54,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   offen: <CircleDot size={15} color="#3B82F6" />,
   ausstehend: <Clock size={15} color="#F59E0B" />,
   escrow: <Clock size={15} color="#8B5CF6" />,
+  abgeliefert: <ClipboardCheck size={15} color="#14B8A6" />,
   abgeschlossen: <Check size={15} color="#10B981" />,
 }
 
@@ -162,6 +168,7 @@ export default function ClientDashboardPage({ params }: { params: { locale: stri
 
 function ProjectCard({ project, locale, t, formatDate, formatAmount, onView }: any) {
   const [hov, setHov] = useState(false)
+  const needsAction = project.status === 'abgeliefert'
 
   return (
     <div
@@ -190,10 +197,10 @@ function ProjectCard({ project, locale, t, formatDate, formatAmount, onView }: a
         </div>
         <button
           onClick={onView}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#EFF6FF', color: '#1D4ED8', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', cursor: 'pointer', flexShrink: 0 }}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', background: needsAction ? '#1D4ED8' : '#EFF6FF', color: needsAction ? '#fff' : '#1D4ED8', border: `1px solid ${needsAction ? '#1D4ED8' : '#BFDBFE'}`, borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', cursor: 'pointer', flexShrink: 0, boxShadow: needsAction ? '0 2px 8px rgba(29,78,216,.25)' : 'none' }}
         >
-          <Eye size={14} />
-          {t.view}
+          {needsAction ? <ClipboardCheck size={14} /> : <Eye size={14} />}
+          {needsAction ? t.approveCta : t.view}
           <ChevronRight size={14} />
         </button>
       </div>
@@ -207,6 +214,10 @@ function ProjectCard({ project, locale, t, formatDate, formatAmount, onView }: a
           <Calendar size={13} color="#94A3B8" />
           <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>{formatDate(project.delivery_date)}</span>
         </div>
+      </div>
+
+      <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid #F1F5F9', maxWidth: '560px' }}>
+        <WorkflowStepper status={project.status} locale={locale} size={22} />
       </div>
     </div>
   )

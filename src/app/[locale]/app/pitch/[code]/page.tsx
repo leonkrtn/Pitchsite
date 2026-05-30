@@ -2,17 +2,20 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { MessageCircle, X, MousePointer, LogIn, UserPlus, KeyRound, Monitor, Smartphone } from 'lucide-react'
+import { MessageCircle, X, MousePointer, LogIn, UserPlus, KeyRound, Monitor, Smartphone, PackageCheck, Check, RotateCcw } from 'lucide-react'
 import { Button, Input } from '@/components/app/ds'
 import { AppLogo } from '@/components/app/AppNavbar'
 import { createBrowserClient } from '@/lib/supabase'
 import { fetchAndRenderDesign } from '@/lib/renderDesign'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { ChatWidget } from '@/components/app/ChatWidget'
+import { WorkflowStepper, WorkflowStageChip } from '@/components/app/WorkflowStepper'
+import { AnnotationCanvas, Annotation } from '@/components/app/annotations'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
 type Pin = Database['public']['Tables']['project_pins']['Row']
+type Revision = Database['public']['Tables']['project_revisions']['Row']
 
 const T = {
   de: {
@@ -40,6 +43,19 @@ const T = {
     loginBtn: 'Anmelden',
     signupBtn: 'Konto erstellen',
     authError: 'Fehler bei der Anmeldung. Bitte überprüfe deine Eingaben.',
+    designerNotes: 'Anmerkungen des Designers',
+    deliveryTitle: 'Finale Abgabe ist da',
+    deliverySub: 'Dein Designer hat das Projekt abgeliefert. Prüfe die Abgabe und nimm sie ab — oder fordere Änderungen an.',
+    acceptDelivery: '✓ Abgabe annehmen',
+    requestChanges: 'Änderung anfordern',
+    accepting: 'Wird angenommen…',
+    requestTitle: 'Änderung anfordern',
+    requestSub: 'Beschreibe, was noch angepasst werden soll. Dein Designer erhält deinen Wunsch direkt im Arbeitsbereich.',
+    requestPh: 'z. B. „Bitte den Header etwas kompakter und die Akzentfarbe dunkler."',
+    requestSubmit: 'Änderung senden',
+    completedTitle: 'Projekt abgeschlossen',
+    completedSub: 'Du hast die Abgabe abgenommen. Der Betrag wird an den Designer ausgezahlt.',
+    inProgressNote: 'Dein Designer arbeitet gerade am Projekt. Du wirst benachrichtigt, sobald die finale Abgabe da ist.',
   },
   en: {
     by: 'by',
@@ -66,6 +82,19 @@ const T = {
     loginBtn: 'Log in',
     signupBtn: 'Create account',
     authError: 'Login failed. Please check your details.',
+    designerNotes: 'Designer notes',
+    deliveryTitle: 'Final delivery is here',
+    deliverySub: 'Your designer delivered the project. Review the hand-off and approve it — or request changes.',
+    acceptDelivery: '✓ Approve delivery',
+    requestChanges: 'Request changes',
+    accepting: 'Approving…',
+    requestTitle: 'Request changes',
+    requestSub: 'Describe what still needs adjusting. Your designer receives your request directly in their workspace.',
+    requestPh: 'e.g. “Please make the header more compact and the accent colour darker.”',
+    requestSubmit: 'Send request',
+    completedTitle: 'Project completed',
+    completedSub: 'You approved the delivery. The amount is being paid out to the designer.',
+    inProgressNote: 'Your designer is working on the project. You will be notified once the final delivery is ready.',
   },
 }
 
@@ -96,6 +125,12 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
   const [blobSrc, setBlobSrc] = useState<string | null>(null)
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop')
   const frameRef = useRef<HTMLDivElement>(null)
+
+  const [sharedAnnotations, setSharedAnnotations] = useState<Annotation[]>([])
+  const [selectedShared, setSelectedShared] = useState<string | null>(null)
+  const [showRequest, setShowRequest] = useState(false)
+  const [requestNote, setRequestNote] = useState('')
+  const [acting, setActing] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -154,6 +189,15 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         .order('created_at', { ascending: true }) as { data: Pin[] | null }
 
       setPins(pinData ?? [])
+
+      const { data: annData } = await (supabase as any)
+        .from('project_annotations')
+        .select('*')
+        .eq('project_id', proj.id)
+        .eq('visibility', 'shared')
+        .order('created_at', { ascending: true }) as { data: Annotation[] | null }
+      setSharedAnnotations(annData ?? [])
+
       setLoading(false)
 
       if (searchParams.get('setup') === '1') {
@@ -237,6 +281,31 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
     setPendingAction(null)
   }
 
+  const acceptDelivery = async () => {
+    if (!project) return
+    if (!currentUserId) { setShowAuthModal(true); return }
+    setActing(true)
+    const now = new Date().toISOString()
+    await (supabase as any).from('projects').update({ status: 'abgeschlossen', approved_at: now }).eq('id', project.id)
+    setProject(prev => prev ? { ...prev, status: 'abgeschlossen', approved_at: now } as any : prev)
+    setActing(false)
+  }
+
+  const requestChanges = async () => {
+    if (!project || !requestNote.trim()) return
+    setActing(true)
+    const round = ((project as any).revision_round ?? 0) + 1
+    await (supabase as any).from('project_revisions').insert({
+      project_id: project.id, round_number: round, note: requestNote.trim(),
+      requested_by: authorName || project.client_name || 'Kunde', status: 'open',
+    })
+    await (supabase as any).from('projects').update({ status: 'escrow', revision_round: round }).eq('id', project.id)
+    setProject(prev => prev ? { ...prev, status: 'escrow', revision_round: round } as any : prev)
+    setActing(false)
+    setShowRequest(false)
+    setRequestNote('')
+  }
+
   if (loading) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0F172A', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
@@ -295,6 +364,25 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         />
       )}
 
+      {/* Request changes modal */}
+      {showRequest && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.55)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }} onClick={() => setShowRequest(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: '18px', padding: '30px', maxWidth: '440px', width: '100%', boxShadow: '0 30px 90px rgba(0,0,0,.35)', animation: 'dropIn 200ms ease-out' }}>
+            <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '18px' }}>
+              <RotateCcw size={22} color="#D97706" />
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '8px' }}>{t.requestTitle}</div>
+            <p style={{ fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#64748B', lineHeight: 1.6, marginBottom: '20px' }}>{t.requestSub}</p>
+            <textarea value={requestNote} onChange={e => setRequestNote(e.target.value)} placeholder={t.requestPh} rows={4} autoFocus
+              style={{ width: '100%', border: '1.5px solid #E2E8F0', borderRadius: '10px', padding: '11px 13px', fontSize: '14px', fontFamily: 'Inter, sans-serif', color: '#0F172A', outline: 'none', resize: 'vertical', minHeight: '96px', marginBottom: '22px', boxSizing: 'border-box', lineHeight: 1.5 }} />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <Button variant="primary" fullWidth loading={acting} disabled={!requestNote.trim()} icon={<RotateCcw size={15} />} onClick={requestChanges}>{t.requestSubmit}</Button>
+              <Button variant="ghost" onClick={() => setShowRequest(false)}>{t.cancel}</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ height: `${headerH}px`, background: '#fff', borderBottom: '1px solid #E2E8F0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: isMobile ? '0 16px' : '0 24px', flexShrink: 0, zIndex: 50 }}>
         <AppLogo />
@@ -334,6 +422,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                   {pins.length} {t.comments}
                 </span>
               </div>
+              {project.status === 'offen' ? (
               <div
                 style={{ position: 'relative' }}
                 onMouseEnter={() => setAcceptHov(true)}
@@ -362,8 +451,47 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                   </Button>
                 </div>
               </div>
+              ) : (
+                <WorkflowStageChip status={project.status as any} locale={locale} />
+              )}
             </div>
           </>
+        )}
+      </div>
+
+      {/* Workflow progress + contextual actions */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: isMobile ? '12px 16px' : '14px 24px', flexShrink: 0, zIndex: 48 }}>
+        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+          <WorkflowStepper status={project.status as any} locale={locale} size={isMobile ? 22 : 26} />
+        </div>
+
+        {project.status === 'abgeliefert' && (
+          <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', background: '#F0FDFA', border: '1px solid #99F6E4', borderRadius: '12px', padding: isMobile ? '14px' : '16px 18px' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '11px', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+              <PackageCheck size={20} color="#0F766E" />
+            </div>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>{t.deliveryTitle}</div>
+              <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#475569', marginTop: '2px', lineHeight: 1.45 }}>
+                {(project as any).delivery_note || t.deliverySub}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
+              <Button variant="secondary" icon={<RotateCcw size={15} />} onClick={() => setShowRequest(true)}>{t.requestChanges}</Button>
+              <Button variant="primary" loading={acting} onClick={acceptDelivery}>{t.acceptDelivery}</Button>
+            </div>
+          </div>
+        )}
+        {(project.status === 'escrow' || project.status === 'ausstehend') && (
+          <div style={{ marginTop: '12px', maxWidth: '760px', margin: '12px auto 0', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8B5CF6', flexShrink: 0 }} />
+            {t.inProgressNote}
+          </div>
+        )}
+        {project.status === 'abgeschlossen' && (
+          <div style={{ marginTop: '12px', maxWidth: '760px', margin: '12px auto 0', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', fontSize: '13px', fontWeight: 600, fontFamily: 'Inter, sans-serif', color: '#16A34A' }}>
+            <Check size={15} /> {t.completedTitle} — {t.completedSub}
+          </div>
         )}
       </div>
 
@@ -468,6 +596,15 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 />
               ))}
 
+              {/* Designer's shared annotations (read-only) */}
+              {sharedAnnotations.length > 0 && (
+                <AnnotationCanvas
+                  annotations={sharedAnnotations} editable={false} tool="select" color="#1D4ED8" visibility="shared"
+                  selectedId={selectedShared} onCreate={() => {}} onSelect={setSelectedShared}
+                  onUpdate={() => {}} onDelete={() => {}} locale={locale}
+                />
+              )}
+
               {newPin && commentMode && (
                 <>
                   <div style={{ position: 'absolute', left: `${newPin.x}%`, top: `${newPin.y}%`, width: '28px', height: '28px', borderRadius: '50% 50% 50% 0', background: 'rgba(29,78,216,.6)', border: '2px solid #fff', zIndex: 10 }} />
@@ -543,12 +680,19 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
         </div>
       </div>
 
-      {/* Mobile fixed bottom bar — Accept button */}
-      {isMobile && (
+      {/* Mobile fixed bottom bar — Accept button (initial pitch only) */}
+      {isMobile && project.status === 'offen' && (
         <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: '#fff', borderTop: '1px solid #E2E8F0', zIndex: 50, display: 'flex', gap: '10px' }}>
           <Button variant="primary" fullWidth loading={acceptLoading} onClick={handleAccept} style={{ height: '44px', fontSize: '14px' }}>
             {t.accept}
           </Button>
+        </div>
+      )}
+      {/* Mobile fixed bottom bar — Delivery approval */}
+      {isMobile && project.status === 'abgeliefert' && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', background: '#fff', borderTop: '1px solid #E2E8F0', zIndex: 50, display: 'flex', gap: '10px' }}>
+          <Button variant="secondary" icon={<RotateCcw size={15} />} onClick={() => setShowRequest(true)} style={{ height: '44px' }}>{t.requestChanges}</Button>
+          <Button variant="primary" fullWidth loading={acting} onClick={acceptDelivery} style={{ height: '44px', fontSize: '14px' }}>{t.acceptDelivery}</Button>
         </div>
       )}
 

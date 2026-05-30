@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Share2, Eye, Copy, Send, Archive, AlertCircle, Check, KeyRound, MessageSquare } from 'lucide-react'
+import { Share2, Eye, Copy, Send, Archive, AlertCircle, Check, KeyRound, MessageSquare, PackageCheck, Layers, RotateCcw } from 'lucide-react'
 import { Button, Badge, Card, Divider } from '@/components/app/ds'
 import { DashboardLayout } from '@/components/app/AppSidebar'
 import { createBrowserClient } from '@/lib/supabase'
 import { ChatWidget } from '@/components/app/ChatWidget'
+import { WorkflowStepper, WorkflowStageChip } from '@/components/app/WorkflowStepper'
+import { currentStage, stageCopy } from '@/lib/workflow'
 import type { Database } from '@/types/database'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
 
@@ -62,6 +64,14 @@ const T = {
     pitchPwNotChanged: 'Erstzugang noch aktiv',
     chat: 'Nachrichten',
     chatSub: 'Direkter Chat mit deinem Kunden',
+    workflowCard: 'Projekt-Workflow',
+    deliveryCard: 'Lieferung & Arbeitsbereich',
+    openWorkspace: 'Arbeitsbereich öffnen',
+    workspaceHint: 'Annotieren, Aufgaben, Versionen & finale Abgabe',
+    deliveredOn: 'Geliefert am',
+    deliveryNoteLabel: 'Übergabe-Notiz',
+    revisionRounds: 'Änderungsrunden',
+    notDeliveredYet: 'Noch nicht abgeliefert',
   },
   en: {
     breadcrumb: 'Dashboard',
@@ -111,6 +121,14 @@ const T = {
     pitchPwNotChanged: 'Initial access still active',
     chat: 'Messages',
     chatSub: 'Direct chat with your client',
+    workflowCard: 'Project workflow',
+    deliveryCard: 'Delivery & workspace',
+    openWorkspace: 'Open workspace',
+    workspaceHint: 'Annotate, tasks, versions & final delivery',
+    deliveredOn: 'Delivered on',
+    deliveryNoteLabel: 'Hand-off note',
+    revisionRounds: 'Change rounds',
+    notDeliveredYet: 'Not delivered yet',
   },
 }
 
@@ -283,6 +301,7 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
             </h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <Badge status={project.status as any} locale={locale} />
+              <WorkflowStageChip status={project.status as any} locale={locale} />
               <span style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B' }}>
                 {t.createdAt(formatDate(project.created_at))}
               </span>
@@ -300,6 +319,24 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
             )}
           </div>
         </div>
+
+        {/* Dynamic workflow overview */}
+        <Card style={{ padding: isMobile ? '20px' : '24px 28px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '16px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>{t.workflowCard}</div>
+              <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#64748B', marginTop: '4px', maxWidth: '440px', lineHeight: 1.5 }}>
+                {stageCopy(currentStage(project.status as any), locale).designerNow}
+              </div>
+            </div>
+            {project.file_url && (
+              <Button variant="primary" icon={<Layers size={16} />} onClick={() => router.push(`/${locale}/app/viewer/${project.code}`)}>
+                {t.openWorkspace}
+              </Button>
+            )}
+          </div>
+          <WorkflowStepper status={project.status as any} locale={locale} />
+        </Card>
 
         {/* Two-column layout */}
         <div style={{
@@ -423,6 +460,42 @@ export default function ProjectPage({ params }: { params: { locale: string; id: 
 
           {/* RIGHT */}
           <div>
+            {/* Delivery & workspace */}
+            <Card style={{ padding: '24px 28px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <PackageCheck size={16} color="#1D4ED8" />
+                <span style={{ fontSize: '15px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A' }}>{t.deliveryCard}</span>
+              </div>
+              <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#94A3B8', marginBottom: '16px' }}>{t.workspaceHint}</div>
+
+              {(project as any).delivered_at ? (
+                <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#0F766E', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                  <Check size={14} /> {t.deliveredOn} {formatDate((project as any).delivered_at)}
+                </div>
+              ) : (
+                <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#94A3B8', marginBottom: '10px' }}>{t.notDeliveredYet}</div>
+              )}
+
+              {(project as any).delivery_note && (
+                <div style={{ fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#475569', background: '#F8FAFC', border: '1px solid #EEF2F6', borderRadius: '8px', padding: '10px 12px', marginBottom: '12px', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '4px' }}>{t.deliveryNoteLabel}</div>
+                  {(project as any).delivery_note}
+                </div>
+              )}
+
+              {((project as any).revision_round ?? 0) > 0 && (
+                <div style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#B45309', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
+                  <RotateCcw size={13} /> {t.revisionRounds}: {(project as any).revision_round}
+                </div>
+              )}
+
+              {project.file_url && (
+                <Button variant="primary" fullWidth icon={<Layers size={16} />} onClick={() => router.push(`/${locale}/app/viewer/${project.code}`)}>
+                  {t.openWorkspace}
+                </Button>
+              )}
+            </Card>
+
             <Card style={{ padding: '24px 28px', marginBottom: '16px' }}>
               <div style={{ fontSize: '15px', fontWeight: 600, fontFamily: '"Plus Jakarta Sans", sans-serif', color: '#0F172A', marginBottom: '20px' }}>
                 {t.projectInfo}
