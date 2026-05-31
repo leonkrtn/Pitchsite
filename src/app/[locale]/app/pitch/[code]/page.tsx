@@ -11,6 +11,7 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { ChatWidget } from '@/components/app/ChatWidget'
 import { WorkflowStepper, WorkflowStageChip } from '@/components/app/WorkflowStepper'
 import { AnnotationCanvas, Annotation } from '@/components/app/annotations'
+import { ElementAnnotationOverlay } from '@/components/app/inspector'
 import type { Database } from '@/types/database'
 
 type Project = Database['public']['Tables']['projects']['Row']
@@ -128,6 +129,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
 
   const [sharedAnnotations, setSharedAnnotations] = useState<Annotation[]>([])
   const [selectedShared, setSelectedShared] = useState<string | null>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
   const [showRequest, setShowRequest] = useState(false)
   const [requestNote, setRequestNote] = useState('')
   const [acting, setActing] = useState(false)
@@ -569,6 +571,7 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
               {project.file_url ? (
                 blobSrc ? (
                   <iframe
+                    ref={iframeRef}
                     src={blobSrc}
                     sandbox="allow-same-origin allow-scripts"
                     style={{ width: '1280px', height: '100%', border: 'none', display: 'block', pointerEvents: commentMode ? 'none' : 'auto' }}
@@ -596,14 +599,19 @@ export default function PitchViewerPage({ params }: { params: { locale: string; 
                 />
               ))}
 
-              {/* Designer's shared annotations (read-only) */}
-              {sharedAnnotations.length > 0 && (
+              {/* Designer's shared canvas annotations (pin, box, draw, callout) */}
+              {sharedAnnotations.filter(a => a.kind !== 'element').length > 0 && (
                 <AnnotationCanvas
-                  annotations={sharedAnnotations} editable={false} tool="select" color="#1D4ED8" visibility="shared"
+                  annotations={sharedAnnotations.filter(a => a.kind !== 'element')} editable={false} tool="select" color="#1D4ED8" visibility="shared"
                   selectedId={selectedShared} onCreate={() => {}} onSelect={setSelectedShared}
                   onUpdate={() => {}} onDelete={() => {}} locale={locale}
                 />
               )}
+              {/* Designer's shared element annotations */}
+              <ElementAnnotationOverlay
+                annotations={sharedAnnotations.filter(a => a.kind === 'element')}
+                iframeRef={iframeRef} editable={false} locale={locale}
+              />
 
               {newPin && commentMode && (
                 <>

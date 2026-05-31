@@ -8,7 +8,7 @@ import {
 
 // ── TYPES ─────────────────────────────────────────────────
 
-export type AnnotationKind = 'pin' | 'box' | 'draw' | 'callout'
+export type AnnotationKind = 'pin' | 'box' | 'draw' | 'callout' | 'element'
 export type AnnotationVisibility = 'private' | 'shared'
 export type Tool = 'select' | AnnotationKind
 
@@ -25,6 +25,8 @@ export interface Annotation {
   text: string | null
   resolved: boolean
   created_at: string
+  selector?: string | null
+  meta?: Record<string, unknown> | null
 }
 
 export interface NewAnnotation {
@@ -37,6 +39,8 @@ export interface NewAnnotation {
   path?: { x: number; y: number }[] | null
   color: string
   text?: string | null
+  selector?: string | null
+  meta?: Record<string, unknown> | null
 }
 
 // ── CONSTANTS ─────────────────────────────────────────────

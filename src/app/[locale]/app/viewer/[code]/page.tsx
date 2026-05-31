@@ -16,10 +16,14 @@ import { useBreakpoint } from '@/hooks/useBreakpoint'
 import { WorkflowStepperVertical, WorkflowStageChip } from '@/components/app/WorkflowStepper'
 import { nextActionFor } from '@/lib/workflow'
 import {
-  AnnotationToolbar, AnnotationCanvas, AnnotationList,
+  AnnotationToolbar, AnnotationCanvas, AnnotationList, PALETTE,
   Annotation, NewAnnotation, Tool, AnnotationVisibility,
 } from '@/components/app/annotations'
+const PALETTE_IMPORT = PALETTE
+import { ElementInspector, ElementAnnotationOverlay } from '@/components/app/inspector'
 import type { Database } from '@/types/database'
+
+type ViewerMode = 'canvas' | 'inspector'
 
 type Project = Database['public']['Tables']['projects']['Row']
 type Pin = Database['public']['Tables']['project_pins']['Row']
@@ -50,6 +54,9 @@ const T = {
     notesFilterAll: 'Alle', notesFilterPrivate: 'Privat', notesFilterShared: 'Geteilt',
     notesEmpty: 'Wähle ein Werkzeug oben und markiere direkt im Design — Kommentar-Pin, Highlight-Box, Freihand oder Beschreibung. Pro Notiz entscheidest du, ob sie privat bleibt oder mit dem Kunden geteilt wird.',
     sharedHint: 'Geteilte Notizen erscheinen im Pitch deines Kunden.',
+    modeCanvas: 'Ansicht', modeInspector: 'Inspektor',
+    inspectorHint: 'HTML-Elemente im Inspektor anklicken und beschreiben',
+    inspectorOnly: 'Inspektor nur für HTML/ZIP',
     tasksTitle: 'Aufgaben & Meilensteine',
     taskPh: 'Aufgabe hinzufügen…',
     tasksEmpty: 'Lege Aufgaben an, um deinen Fortschritt zu strukturieren.',
@@ -93,8 +100,11 @@ const T = {
     openRevisions: 'Open change requests',
     tasksProgress: 'Tasks',
     notesFilterAll: 'All', notesFilterPrivate: 'Private', notesFilterShared: 'Shared',
-    notesEmpty: 'Pick a tool above and mark directly on the design — comment pin, highlight box, freehand or description. Per note you decide whether it stays private or is shared with the client.',
-    sharedHint: 'Shared notes appear in your client’s pitch.',
+    notesEmpty: "Pick a tool above and mark directly on the design -- comment pin, highlight box, freehand or description. Per note you decide whether it stays private or is shared with the client.",
+    sharedHint: "Shared notes appear in your client’s pitch.",
+    modeCanvas: "Canvas", modeInspector: "Inspector",
+    inspectorHint: "Click HTML elements to inspect and annotate",
+    inspectorOnly: "Inspector for HTML/ZIP only",
     tasksTitle: 'Tasks & milestones',
     taskPh: 'Add a task…',
     tasksEmpty: 'Create tasks to structure your progress.',
@@ -148,6 +158,9 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
   const [visibility, setVisibility] = useState<AnnotationVisibility>('private')
   const [selectedAnn, setSelectedAnn] = useState<string | null>(null)
   const [notesFilter, setNotesFilter] = useState<'all' | 'private' | 'shared'>('all')
+  const [viewerMode, setViewerMode] = useState<ViewerMode>('canvas')
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const [zoom, setZoom] = useState(100)
   const [panelOpen, setPanelOpen] = useState(!isMobile)
@@ -210,6 +223,7 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
       kind: draft.kind, visibility: draft.visibility, color: draft.color,
       x_pct: draft.x_pct, y_pct: draft.y_pct, w_pct: draft.w_pct ?? null, h_pct: draft.h_pct ?? null,
       path: draft.path ?? null, text: draft.text ?? null,
+      selector: draft.selector ?? null, meta: draft.meta ?? null,
     }).select().single() as { data: Annotation | null }
     if (data) {
       setAnnotations(prev => [...prev, data])
@@ -360,7 +374,43 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
 
       {/* Toolbar */}
       <div style={{ minHeight: '54px', background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '8px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, zIndex: 49, gap: '12px', flexWrap: 'wrap' }}>
-        <AnnotationToolbar tool={tool} setTool={setTool} color={color} setColor={setColor} visibility={visibility} setVisibility={setVisibility} locale={locale} compact={isMobile} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Mode switcher */}
+          {(() => {
+            const isHtml = !!project?.file_name && /\.(html|zip)$/i.test(project.file_name)
+            return (
+              <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: '9px', padding: '3px', gap: '2px' }}>
+                {(['canvas', 'inspector'] as const).map(m => {
+                  const active = viewerMode === m
+                  const disabled = m === 'inspector' && !isHtml
+                  return (
+                    <button key={m} onClick={() => !disabled && setViewerMode(m)}
+                      title={m === 'inspector' && !isHtml ? t.inspectorOnly : undefined}
+                      style={{
+                        padding: '5px 12px', borderRadius: '6px', border: 'none',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        background: active ? '#fff' : 'transparent',
+                        color: disabled ? '#CBD5E1' : active ? '#0F172A' : '#64748B',
+                        boxShadow: active ? '0 1px 3px rgba(0,0,0,.1)' : 'none',
+                        fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
+                        transition: 'all 150ms ease', opacity: disabled ? 0.5 : 1,
+                      }}>
+                      {m === 'canvas' ? t.modeCanvas : t.modeInspector}
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })()}
+          {viewerMode === 'canvas' && <AnnotationToolbar tool={tool} setTool={setTool} color={color} setColor={setColor} visibility={visibility} setVisibility={setVisibility} locale={locale} compact={isMobile} />}
+          {viewerMode === 'inspector' && (
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              {PALETTE_IMPORT.map(c => (
+                <button key={c} onClick={() => setColor(c)} style={{ width: color === c ? '22px' : '18px', height: color === c ? '22px' : '18px', borderRadius: '50%', background: c, cursor: 'pointer', border: color === c ? '2px solid #fff' : '2px solid transparent', boxShadow: color === c ? `0 0 0 2px ${c}` : '0 0 0 1px rgba(0,0,0,.08)', transition: 'all 150ms ease', padding: 0, flexShrink: 0 }} />
+              ))}
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button onClick={() => setShowFeedback(v => !v)} title={t.showFeedback}
             style={{ display: 'flex', alignItems: 'center', gap: '6px', height: '34px', padding: '0 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, fontFamily: 'Inter, sans-serif',
@@ -382,12 +432,16 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
         {/* Viewport */}
         <div style={{ flex: 1, overflow: 'hidden', background: '#1A1A2E', backgroundImage: 'repeating-conic-gradient(#22223B 0% 25%, #1A1A2E 0% 50%)', backgroundSize: '20px 20px', display: 'flex', minWidth: 0 }}>
           <div style={{ flex: 1, padding: isMobile ? '20px' : '36px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', overflow: 'auto' }}>
-            <div style={{ width: `${1280 * zoom / 100}px`, background: '#fff', boxShadow: '0 20px 80px rgba(0,0,0,.4)', position: 'relative', flexShrink: 0, alignSelf: 'stretch' }}>
+            <div ref={containerRef} style={{ width: `${1280 * zoom / 100}px`, background: '#fff', boxShadow: '0 20px 80px rgba(0,0,0,.4)', position: 'relative', flexShrink: 0, alignSelf: 'stretch' }}>
               {project.file_url ? (
                 blobSrc ? (
-                  <iframe src={blobSrc} sandbox="allow-same-origin allow-scripts"
-                    style={{ width: '100%', height: '100%', minHeight: '420px', border: 'none', display: 'block', pointerEvents: tool === 'select' ? 'auto' : 'none' }}
-                    title={project.name} />
+                  <iframe
+                    ref={iframeRef}
+                    src={blobSrc}
+                    sandbox="allow-same-origin allow-scripts"
+                    style={{ width: '100%', height: '100%', minHeight: '420px', border: 'none', display: 'block', pointerEvents: (viewerMode === 'inspector' || tool !== 'select') ? 'none' : 'auto' }}
+                    title={project.name}
+                  />
                 ) : (
                   <div style={loadingBox}>…</div>
                 )
@@ -404,12 +458,27 @@ export default function DesignerViewerPage({ params }: { params: { locale: strin
                 <FeedbackPin key={pin.id} pin={pin} number={i + 1} onResolve={() => resolvePin(pin.id)} resolveLabel={t.resolve} resolvedLabel={t.resolved} />
               ))}
 
-              {/* Designer annotation layer */}
-              <AnnotationCanvas
-                annotations={annotations} editable tool={tool} color={color} visibility={visibility}
-                selectedId={selectedAnn} onCreate={createAnnotation} onSelect={setSelectedAnn}
-                onUpdate={updateAnnotation} onDelete={deleteAnnotation} locale={locale}
-              />
+              {viewerMode === 'canvas' ? (
+                <>
+                  <AnnotationCanvas
+                    annotations={annotations.filter(a => a.kind !== 'element')} editable tool={tool} color={color} visibility={visibility}
+                    selectedId={selectedAnn} onCreate={createAnnotation} onSelect={setSelectedAnn}
+                    onUpdate={updateAnnotation} onDelete={deleteAnnotation} locale={locale}
+                  />
+                  {/* Element annotations always visible in canvas mode too */}
+                  <ElementAnnotationOverlay
+                    annotations={annotations.filter(a => a.kind === 'element')}
+                    iframeRef={iframeRef} editable locale={locale} onDelete={deleteAnnotation}
+                  />
+                </>
+              ) : (
+                <ElementInspector
+                  iframeRef={iframeRef} containerRef={containerRef}
+                  color={color} visibility={visibility} setVisibility={setVisibility}
+                  locale={locale} onCreate={createAnnotation} onDelete={deleteAnnotation}
+                  existingAnnotations={annotations}
+                />
+              )}
             </div>
           </div>
         </div>

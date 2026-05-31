@@ -158,7 +158,7 @@ export interface Database {
           id: string
           project_id: string
           author_id: string | null
-          kind: 'pin' | 'box' | 'draw' | 'callout'
+          kind: 'pin' | 'box' | 'draw' | 'callout' | 'element'
           visibility: 'private' | 'shared'
           x_pct: number
           y_pct: number
@@ -169,11 +169,13 @@ export interface Database {
           text: string | null
           resolved: boolean
           created_at: string
+          selector: string | null
+          meta: Record<string, unknown> | null
         }
         Insert: {
           project_id: string
           author_id?: string | null
-          kind?: 'pin' | 'box' | 'draw' | 'callout'
+          kind?: 'pin' | 'box' | 'draw' | 'callout' | 'element'
           visibility?: 'private' | 'shared'
           x_pct?: number
           y_pct?: number
@@ -182,6 +184,8 @@ export interface Database {
           path?: { x: number; y: number }[] | null
           color?: string
           text?: string | null
+          selector?: string | null
+          meta?: Record<string, unknown> | null
           resolved?: boolean
         }
         Update: {
