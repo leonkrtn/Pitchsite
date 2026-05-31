@@ -247,6 +247,9 @@ function popoverShell(ann: Annotation, flipX: boolean): CSSProperties {
     width: '252px', background: '#fff', border: '1px solid #E2E8F0', borderRadius: '12px',
     padding: '14px', boxShadow: '0 12px 40px rgba(0,0,0,.16)', zIndex: 60,
     animation: 'dropIn 150ms ease-out',
+    // Re-enable interaction: the overlay sets pointer-events:none in select mode,
+    // which children would otherwise inherit, letting clicks fall through to the design.
+    pointerEvents: 'auto',
   }
 }
 
